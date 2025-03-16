@@ -160,7 +160,7 @@ class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name
 
 class CatchView(View):
     def __init__(self, ball: "CountryBall"):
-        super().__init__()
+        super().__init__(timeout=600)
         self.ball = ball
 
     async def interaction_check(self, interaction: discord.Interaction["BallsDexBot"], /) -> bool:
