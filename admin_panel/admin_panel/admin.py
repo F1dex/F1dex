@@ -1,8 +1,15 @@
 from django.contrib import admin
-
+import os
+import random
+from django.conf import settings
 
 class BallsdexAdminSite(admin.AdminSite):
-    site_header = "Ballsdex administration"  # TODO: use configured bot name
-    site_title = "Ballsdex admin panel"
-    site_url = None  # type: ignore
-    final_catch_all_view = False
+    def login(self, request, extra_context=None):
+        img_dir = os.path.join(settings.BASE_DIR, 'static/admin_backgrounds')
+        images = [f for f in os.listdir(img_dir) if f.endswith(('.jpg', '.png'))]
+        background_url = f"/static/admin_backgrounds/{random.choice(images)}" if images else None
+
+        if extra_context is None:
+            extra_context = {}
+        extra_context['background_url'] = background_url
+        return super().login(request, extra_context)

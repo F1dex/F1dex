@@ -7,7 +7,7 @@ import math
 import time
 import types
 from datetime import datetime
-from typing import TYPE_CHECKING, Self, cast
+from typing import TYPE_CHECKING, cast
 
 import aiohttp
 import discord
@@ -55,11 +55,8 @@ class Translator(app_commands.Translator):
     async def translate(
         self, string: locale_str, locale: Locale, context: TranslationContextTypes
     ) -> str | None:
-        return (
-            string.message.replace("countryballs", settings.plural_collectible_name)
-            .replace("countryball", settings.collectible_name)
-            .replace("/balls", f"/{settings.players_group_cog_name}")
-            .replace("BallsDex", settings.bot_name)
+        return string.message.replace("countryball", settings.collectible_name).replace(
+            "BallsDex", settings.bot_name
         )
 
 
@@ -131,7 +128,7 @@ class BallsDexBot(commands.AutoShardedBot):
     def __init__(
         self,
         command_prefix: PrefixType[BallsDexBot],
-        disable_messsage_content: bool = False,
+        disable_messsage_content: bool = True,
         disable_time_check: bool = False,
         skip_tree_sync: bool = False,
         dev: bool = False,
@@ -169,14 +166,13 @@ class BallsDexBot(commands.AutoShardedBot):
 
         self._shutdown = 0
         self.startup_time: datetime | None = None
-        self.application_emojis: dict[int, discord.Emoji] = {}
         self.blacklist: set[int] = set()
         self.blacklist_guild: set[int] = set()
         self.catch_log: set[int] = set()
         self.command_log: set[int] = set()
         self.locked_balls = TTLCache(maxsize=99999, ttl=60 * 30)
 
-        self.owner_ids: set[int]
+        self.owner_ids: set
 
     async def start_prometheus_server(self):
         self.prometheus_server = PrometheusServer(
@@ -208,17 +204,10 @@ class BallsDexBot(commands.AutoShardedBot):
                     bot_command, cast(list[app_commands.AppCommandGroup], synced_command.options)
                 )
 
-    def get_emoji(self, id: int) -> discord.Emoji | None:
-        return self.application_emojis.get(id) or super().get_emoji(id)
-
     async def load_cache(self):
         table = Table(box=box.SIMPLE)
         table.add_column("Model", style="cyan")
         table.add_column("Count", justify="right", style="green")
-
-        self.application_emojis.clear()
-        for emoji in await self.fetch_application_emojis():
-            self.application_emojis[emoji.id] = emoji
 
         balls.clear()
         for ball in await Ball.all():
@@ -302,7 +291,7 @@ class BallsDexBot(commands.AutoShardedBot):
             if settings.team_owners:
                 self.owner_ids.update(m.id for m in self.application.team.members)
             else:
-                self.owner_ids.add(self.application.team.owner_id)  # type: ignore
+                self.owner_ids.add(self.application.team.owner_id)
         else:
             self.owner_ids.add(self.application.owner.id)
         if settings.co_owners:
@@ -371,7 +360,7 @@ class BallsDexBot(commands.AutoShardedBot):
             "is now operational![/green][/bold]\n"
         )
 
-    async def blacklist_check(self, interaction: discord.Interaction[Self]) -> bool:
+    async def blacklist_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id in self.blacklist:
             if interaction.type != discord.InteractionType.autocomplete:
                 await interaction.response.send_message(
@@ -394,8 +383,7 @@ class BallsDexBot(commands.AutoShardedBot):
             return False
         if interaction.command and interaction.user.id in self.command_log:
             log.info(
-                f"{interaction.user} ({interaction.user.id}) used "
-                f'"{interaction.command.qualified_name}" in '
+                f'{interaction.user} ({interaction.user.id}) used "{interaction.command.name}" in '
                 f"{interaction.guild} ({interaction.guild_id})"
             )
         return True
@@ -440,13 +428,10 @@ class BallsDexBot(commands.AutoShardedBot):
             await context.send(
                 "An error occured when running the command. Contact support if this persists."
             )
-            log.error(
-                f"Unknown error in text command {context.command.qualified_name}",
-                exc_info=exception,
-            )
+            log.error(f"Unknown error in text command {context.command.name}", exc_info=exception)
 
     async def on_application_command_error(
-        self, interaction: discord.Interaction[Self], error: app_commands.AppCommandError
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ):
         async def send(content: str):
             if interaction.response.is_done():
@@ -492,7 +477,7 @@ class BallsDexBot(commands.AutoShardedBot):
                 await send("The bot does not have the permission to do something.")
                 # log to know where permissions are lacking
                 log.warning(
-                    f"Missing permissions for app command {interaction.command.qualified_name}",
+                    f"Missing permissions for app command {interaction.command.name}",
                     exc_info=error.original,
                 )
                 return
@@ -501,15 +486,14 @@ class BallsDexBot(commands.AutoShardedBot):
                 # most likely an interaction received twice (happens sometimes),
                 # or two instances are running on the same token.
                 log.warning(
-                    f"Tried invoking command {interaction.command.qualified_name}, but the "
+                    f"Tried invoking command {interaction.command.name}, but the "
                     "interaction was already responded to.",
                     exc_info=error.original,
                 )
                 # still including traceback because it may be a programming error
 
             log.error(
-                f"Error in slash command {interaction.command.qualified_name}",
-                exc_info=error.original,
+                f"Error in slash command {interaction.command.name}", exc_info=error.original
             )
             await send(
                 "An error occured when running the command. Contact support if this persists."
@@ -519,7 +503,7 @@ class BallsDexBot(commands.AutoShardedBot):
         if isinstance(
             error, (app_commands.CommandNotFound, app_commands.CommandSignatureMismatch)
         ):
-            await send("Commands desynchronized, contact support to fix this.")
+            await send("Commands desynchronizeded, contact support to fix this.")
             log.error(error.args[0])
 
         await send("An error occured when running the command. Contact support if this persists.")
