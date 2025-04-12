@@ -1,15 +1,15 @@
 import json
-from rapidfuzz import process, fuzz
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING
 
 import discord
 from discord import app_commands
 from discord.ext import commands
+from rapidfuzz import fuzz, process
 
-from ballsdex.settings import settings
+from ballsdex.core.models import BallInstance, Player, Special
 from ballsdex.core.utils.transformers import BallEnabledTransform
-from ballsdex.core.models import Player, BallInstance, Special
+from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 with open("ballsdex/packages/claim/amounts.json", "r") as file:
     data = json.load(file)
     data_names = [entry["name"] for entry in data]
+
 
 def get_amount_by_name(name: str, threshold: int = 85):
     result = process.extractOne(name, data_names, scorer=fuzz.ratio)
@@ -57,7 +58,7 @@ class Claim(commands.GroupCog):
         if amount is None:
             await interaction.response.send_message(
                 f"Sorry, this {settings.collectible_name} is not available for claiming.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -111,7 +112,7 @@ class Claim(commands.GroupCog):
         if amount is None:
             await interaction.response.send_message(
                 f"Sorry, this {settings.collectible_name} is not available for claiming.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
@@ -165,7 +166,7 @@ class Claim(commands.GroupCog):
         if amount is None:
             await interaction.response.send_message(
                 f"Sorry, this {settings.collectible_name} is not available for claiming.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
