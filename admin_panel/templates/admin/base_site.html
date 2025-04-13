@@ -5,8 +5,10 @@
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">
 <head>
   <meta charset="utf-8">
-  <title>{% block title %}F1Dex Administration{% endblock %}</title>
+  <title>{% block title %}F1Dex Admin{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="{% static 'admin/css/base.css' %}">
   <link rel="stylesheet" href="{% static 'admin/css/dark_mode.css' %}">
@@ -17,9 +19,81 @@
     <link rel="stylesheet" href="{% static 'admin/css/responsive_rtl.css' %}">
   {% endif %}
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'admin/css/f1dex_admin.css' %}">
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background-color: #111;
+      color: #eee;
+    }
+
+    #header {
+      background: linear-gradient(to right, #c00 0%, #900 100%);
+      padding: 1rem;
+      color: white;
+      border-bottom: 4px solid #ff0000;
+    }
+
+    #branding h1#site-name a {
+      font-size: 2rem;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+
+    #user-tools {
+      float: right;
+      font-size: 0.9rem;
+    }
+
+    .breadcrumbs {
+      background: #222;
+      padding: 0.5rem 1rem;
+      border-left: 5px solid #c00;
+      color: #aaa;
+    }
+
+    .breadcrumbs a {
+      color: #f33;
+    }
+
+    h1, h2 {
+      color: #ff4444;
+    }
+
+    .messagelist li {
+      background: #222;
+      border-left: 5px solid #f00;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      color: #666;
+      background: #111;
+      border-top: 1px solid #333;
+    }
+
+    button, .button {
+      background: #c00;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover, .button:hover {
+      background: #f00;
+    }
+
+    .skip-to-content-link {
+      background: #000;
+      color: #fff;
+    }
+  </style>
 
   <script src="{% static 'admin/js/theme.js' %}"></script>
   <script src="{% static 'admin/js/nav_sidebar.js' %}" defer></script>
@@ -34,7 +108,7 @@
   {% if not is_popup %}
   <header id="header">
     <div id="branding">
-      <h1 id="site-name"><a href="{% url 'admin:index' %}">F1Dex Configuration</a></h1>
+      <h1 id="site-name"><a href="{% url 'admin:index' %}">F1Dex Admin</a></h1>
     </div>
 
     <div id="user-tools">
@@ -84,7 +158,7 @@
   </div>
 
   <footer id="footer">
-    <p>F1Dex Admin Panel &mdash; Built with Django:D</p>
+    <p>🏁 F1Dex Admin Panel — Powered by Django</p>
   </footer>
 </div>
 
