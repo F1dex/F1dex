@@ -19,5 +19,5 @@ class BallsdexAdminSite(admin.AdminSite):
             'all': ['admin/css/f1dex_main.css'],
         }
 
-admin.site = F1DexAdminSite()
+admin.site = BallsdexAdminSite()
 admin.autodiscover()
