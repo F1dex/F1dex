@@ -1,0 +1,158 @@
+{% load i18n %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+  .f1-admin-wrapper {
+    font-family: 'Orbitron', sans-serif;
+    background-color: #0d0d0d;
+    color: #f2f2f2;
+    padding: 2rem;
+    animation: fadeIn 0.6s ease-in;
+  }
+
+  .f1-admin-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.2);
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .f1-admin-wrapper caption {
+    text-align: left;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #ff1e1e;
+    padding: 1rem;
+    background: linear-gradient(to right, #ff1e1e, #550000);
+    box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.5);
+  }
+
+  .f1-admin-wrapper .section {
+    color: #fff;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .f1-admin-wrapper .section:hover {
+    text-shadow: 0 0 5px #ff1e1e, 0 0 10px #ff1e1e;
+    color: #ff4a4a;
+  }
+
+  .f1-admin-wrapper th, .f1-admin-wrapper td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #333;
+  }
+
+  .f1-admin-wrapper th {
+    color: #fff;
+    text-shadow: 0 0 5px #ff1e1e;
+    font-weight: 700;
+  }
+
+  .f1-admin-wrapper td a {
+    color: #ff4a4a;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .f1-admin-wrapper td a:hover {
+    text-shadow: 0 0 5px #ff4a4a;
+    color: #ffffff;
+  }
+
+  .f1-admin-wrapper .addlink {
+    color: #4caf50;
+  }
+
+  .f1-admin-wrapper .changelink {
+    color: #2196f3;
+  }
+
+  .f1-admin-wrapper .viewlink {
+    color: #ffc107;
+  }
+
+  .f1-admin-wrapper .current-app caption {
+    background-color: #550000;
+    animation: pulse 1s infinite alternate;
+  }
+
+  .f1-admin-wrapper .current-model th a {
+    text-decoration: underline;
+    text-shadow: 0 0 8px #fff;
+  }
+
+  .visually-hidden {
+    position: absolute !important;
+    height: 1px; width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    from { box-shadow: inset 0 0 10px #ff1e1e; }
+    to { box-shadow: inset 0 0 20px #ff4a4a; }
+  }
+</style>
+
+<div class="f1-admin-wrapper">
+  {% if app_list %}
+    {% for app in app_list %}
+      <div class="app-{{ app.app_label }} module{% if app.app_url in request.path|urlencode %} current-app{% endif %}">
+        <table>
+          <caption>
+            <a href="{{ app.app_url }}" class="section" title="{% blocktranslate with name=app.name %}Models in the {{ name }} application{% endblocktranslate %}">{{ app.name }}</a>
+          </caption>
+          <thead class="visually-hidden">
+            <tr>
+              <th scope="col">{% translate 'Model name' %}</th>
+              <th scope="col">{% translate 'Add link' %}</th>
+              <th scope="col">{% translate 'Change or view list link' %}</th>
+            </tr>
+          </thead>
+          {% for model in app.models %}
+            {% with model_name=model.object_name|lower %}
+              <tr class="model-{{ model_name }}{% if model.admin_url in request.path|urlencode %} current-model{% endif %}">
+                <th scope="row" id="{{ app.app_label }}-{{ model_name }}">
+                  {% if model.admin_url %}
+                    <a href="{{ model.admin_url }}"{% if model.admin_url in request.path|urlencode %} aria-current="page"{% endif %}>{{ model.name }}</a>
+                  {% else %}
+                    {{ model.name }}
+                  {% endif %}
+                </th>
+
+                {% if model.add_url %}
+                  <td><a href="{{ model.add_url }}" class="addlink" aria-describedby="{{ app.app_label }}-{{ model_name }}">{% translate 'Add' %}</a></td>
+                {% else %}
+                  <td></td>
+                {% endif %}
+
+                {% if model.admin_url and show_changelinks %}
+                  {% if model.view_only %}
+                    <td><a href="{{ model.admin_url }}" class="viewlink" aria-describedby="{{ app.app_label }}-{{ model_name }}">{% translate 'View' %}</a></td>
+                  {% else %}
+                    <td><a href="{{ model.admin_url }}" class="changelink" aria-describedby="{{ app.app_label }}-{{ model_name }}">{% translate 'Change' %}</a></td>
+                  {% endif %}
+                {% elif show_changelinks %}
+                  <td></td>
+                {% endif %}
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        </table>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>{% translate 'You don’t have permission to view or edit anything.' %}</p>
+  {% endif %}
+</div>
