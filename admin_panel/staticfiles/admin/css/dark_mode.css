@@ -1,0 +1,125 @@
+:root {
+  --primary-bg: #0d0d0d;
+  --secondary-bg: #1a1a1a;
+  --accent-color: #e10600;
+  --text-color: #f0f0f0;
+  --muted-text: #888;
+  --border-color: #333;
+  --hover-color: #e1060070;
+  --input-bg: #1f1f1f;
+  --input-border: #444;
+  --button-bg: #e10600;
+  --button-hover-bg: #ff2e2e;
+}
+
+body {
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4 {
+  color: var(--accent-color);
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+#nav-sidebar {
+  background-color: var(--secondary-bg);
+  border-right: 1px solid var(--border-color);
+}
+
+#nav-sidebar a {
+  color: var(--text-color);
+}
+
+#nav-sidebar a:hover,
+#nav-sidebar .current-app {
+  background-color: var(--hover-color);
+}
+
+input, select, textarea {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid var(--input-border);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+button, .button {
+  background-color: var(--button-bg);
+  color: white;
+  border: none;
+  padding: 0.4rem 1rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover, .button:hover {
+  background-color: var(--button-hover-bg);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background-color: var(--secondary-bg);
+}
+
+th, td {
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+
+thead {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.messagelist li {
+  background-color: #222;
+  border-left: 5px solid var(--accent-color);
+  padding: 0.5rem 1rem;
+  margin: 0.5rem 0;
+  color: var(--text-color);
+}
+
+#footer {
+  background-color: var(--secondary-bg);
+  color: var(--muted-text);
+  padding: 1rem;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 4px;
+}
+
+#header {
+  background-color: #000;
+  border-bottom: 3px solid var(--accent-color);
+}
+
+#branding h1 a {
+  color: var(--accent-color);
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+tr:hover {
+  background-color: var(--hover-color);
+}
