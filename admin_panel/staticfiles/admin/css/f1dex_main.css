@@ -1,0 +1,75 @@
+body {
+  background-color: #0a0a0a;
+  color: #e0e0e0;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#header {
+  background-color: #1a4567;
+  border-bottom: 2px solid #d71a28;
+}
+
+#header h1 {
+  color: #f7d774;
+  font-size: 1.6rem;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+#branding h1 a {
+  color: #f7d774 !important;
+  text-decoration: none;
+}
+
+#user-tools {
+  color: #ffffff;
+}
+
+.module h2 {
+  background-color: #295a80;
+  color: #f7d774;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 1.1rem;
+  border-left: 5px solid #d71a28;
+}
+
+.dashboard-module,
+.module {
+  background-color: #111;
+  border: 1px solid #333;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  box-shadow: 0 0 10px rgba(215, 26, 40, 0.2);
+}
+
+a {
+  color: #58a6ff;
+}
+
+a:hover {
+  color: #d71a28;
+}
+
+#content-main {
+  padding: 30px;
+}
+
+#content-related {
+  background-color: #111;
+  border-left: 1px solid #333;
+}
+
+#recent-actions-module {
+  background-color: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  color: #aaa;
+}
+
+#footer {
+  color: #666;
+  text-align: center;
+  padding: 15px;
+  font-size: 0.85rem;
+}
