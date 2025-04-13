@@ -8,21 +8,63 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
 
-    body.login {
+    * {
       margin: 0;
       padding: 0;
-      background: url('{{ background_url }}') no-repeat center center fixed;
-      background-size: cover;
+      box-sizing: border-box;
+    }
+
+    body.login {
       font-family: 'Orbitron', sans-serif;
-      color: #fff;
+      height: 100vh;
+      background: black;
+      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
+      color: white;
+    }
+
+    .intro-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
       height: 100vh;
-      overflow: hidden;
+      background: black;
+      z-index: 999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      animation: openScreen 2s ease forwards;
+    }
+
+    .intro-text {
+      opacity: 0;
+      font-size: 2rem;
+      letter-spacing: 2px;
+      animation: fadeIn 1.5s ease forwards;
+      animation-delay: 1s;
+    }
+
+    @keyframes openScreen {
+      0% {
+        transform: scaleY(1);
+      }
+      100% {
+        transform: scaleY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
     }
 
     #content-main {
+      display: none;
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(8px);
       padding: 3rem;
@@ -31,11 +73,8 @@
       max-width: 420px;
       box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
       border: 1px solid #d71a28;
-      transition: transform 0.3s ease-in-out;
-    }
-
-    #content-main:hover {
-      transform: scale(1.02);
+      animation: fadeIn 1s ease forwards;
+      animation-delay: 2.2s;
     }
 
     .form-row {
@@ -118,50 +157,27 @@
       text-align: center;
       margin-bottom: 1.5rem;
     }
-
-    .successnote {
-      color: #3ddc84;
-      font-weight: bold;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .spinner {
-      margin-top: 1rem;
-      text-align: center;
-    }
-
-    .spinner::before {
-      content: '';
-      display: inline-block;
-      width: 3em;
-      height: 3em;
-      border: 4px solid transparent;
-      border-top-color: #d71a28;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
   </style>
 </head>
 <body class="login">
 
-  {% if form.errors and not form.non_field_errors %}
-  <p class="errornote">
-    {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
-  </p>
-  {% endif %}
-
-  {% if form.non_field_errors %}
-    {% for error in form.non_field_errors %}
-      <p class="errornote">{{ error }}</p>
-    {% endfor %}
-  {% endif %}
+  <div class="intro-screen">
+    <div class="intro-text">Welcome to F1Dex</div>
+  </div>
 
   <div id="content-main">
+    {% if form.errors and not form.non_field_errors %}
+    <p class="errornote">
+      {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+    </p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+      {% for error in form.non_field_errors %}
+        <p class="errornote">{{ error }}</p>
+      {% endfor %}
+    {% endif %}
+
     {% if user.is_authenticated %}
     <p class="errornote">
       {% blocktranslate trimmed %}
@@ -199,5 +215,15 @@
       </a>
     </div>
   </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.querySelector('.intro-screen').style.display = 'none';
+        document.querySelector('#content-main').style.display = 'block';
+      }, 2200);
+    });
+  </script>
+
 </body>
 </html>
