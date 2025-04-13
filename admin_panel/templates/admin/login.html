@@ -1,63 +1,156 @@
 {% extends "admin/login.html" %}
 {% load i18n static %}
 
-{% block extrastyle %}{{ block.super }}
+{% block extrastyle %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static "admin/css/override.css" %}">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+  body.login {
+    margin: 0;
+    padding: 0;
+    background: url('{{ background_url }}') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Orbitron', sans-serif;
+    color: #fff;
+  }
+
+  #content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  #content-main {
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    padding: 3rem;
+    border-radius: 15px;
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.4);
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .form-row,
+  .password-reset-link,
+  .submit-row,
+  .discord-row {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-row label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #eee;
+  }
+
+  .form-row input {
+    width: 100%;
+    padding: 0.7em;
+    background: #111;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 6px;
+  }
+
+  .submit-row input[type="submit"],
+  .discord-button {
+    background: #d71a28;
+    color: white;
+    font-weight: bold;
+    padding: 0.8em 1.5em;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .submit-row input[type="submit"]:hover,
+  .discord-button:hover {
+    background: #b3121d;
+  }
+
+  .discord-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+
+  .discord-button.disabled {
+    background-color: #555;
+    pointer-events: none;
+  }
+
+  .discord-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 0.5em;
+  }
+
+  .errornote {
+    color: #ff3b3b;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 {% if form.errors and not form.non_field_errors %}
 <p class="errornote">
-{% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+  {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
 </p>
 {% endif %}
 
 {% if form.non_field_errors %}
-{% for error in form.non_field_errors %}
-<p class="errornote">
-    {{ error }}
-</p>
-{% endfor %}
+  {% for error in form.non_field_errors %}
+    <p class="errornote">{{ error }}</p>
+  {% endfor %}
 {% endif %}
 
 <div id="content-main">
 
-{% if user.is_authenticated %}
-<p class="errornote">
-{% blocktranslate trimmed %}
-    You are authenticated as {{ username }}, but are not authorized to
-    access this page. Would you like to login to a different account?
-{% endblocktranslate %}
-</p>
-{% endif %}
-
-<form action="{{ app_path }}" method="post" id="login-form" style="{% if not pwlogin %}display:none;{% endif %}padding:0 0 2em 0;">{% csrf_token %}
-  <div class="form-row">
-    {{ form.username.errors }}
-    {{ form.username.label_tag }} {{ form.username }}
-  </div>
-  <div class="form-row">
-    {{ form.password.errors }}
-    {{ form.password.label_tag }} {{ form.password }}
-    <input type="hidden" name="next" value="{{ next }}">
-  </div>
-  {% url 'admin_password_reset' as password_reset_url %}
-  {% if password_reset_url %}
-  <div class="password-reset-link">
-    <a href="{{ password_reset_url }}">{% translate 'Forgotten your login credentials?' %}</a>
-  </div>
+  {% if user.is_authenticated %}
+  <p class="errornote">
+    {% blocktranslate trimmed %}
+      You are authenticated as {{ username }}, but are not authorized to
+      access this page. Would you like to login to a different account?
+    {% endblocktranslate %}
+  </p>
   {% endif %}
-  <div class="submit-row">
-    <input type="submit" value="{% translate 'Log in' %}">
+
+  <form action="{{ app_path }}" method="post" id="login-form" style="{% if not pwlogin %}display:none;{% endif %}">{% csrf_token %}
+    <div class="form-row">
+      {{ form.username.errors }}
+      {{ form.username.label_tag }} {{ form.username }}
+    </div>
+    <div class="form-row">
+      {{ form.password.errors }}
+      {{ form.password.label_tag }} {{ form.password }}
+      <input type="hidden" name="next" value="{{ next }}">
+    </div>
+    {% url 'admin_password_reset' as password_reset_url %}
+    {% if password_reset_url %}
+    <div class="password-reset-link">
+      <a href="{{ password_reset_url }}" style="color: #bbb;">{% translate 'Forgotten your login credentials?' %}</a>
+    </div>
+    {% endif %}
+    <div class="submit-row">
+      <input type="submit" value="{% translate 'Log in' %}">
+    </div>
+  </form>
+
+  <div class="discord-row">
+    <a href="{% url "social:begin" "discord" %}" class="button discord-button {% if "discord" not in backends.backends %}disabled{% endif %}">
+      <img src="{% static "admin/img/discord.svg" %}" class="discord-icon"/>
+      <div class="discord-text">Login with Discord</div>
+    </a>
   </div>
-
-</form>
-
-<div class="discord-row">
-  <a href="{% url "social:begin" "discord" %}" class="button discord-button {% if "discord" not in backends.backends %}disabled{% endif %}">
-    <img src="{% static "admin/img/discord.svg" %}" class="discord-icon"/>
-    <div class="discord-text">Login with Discord</div></a>
-</div>
 
 </div>
 {% endblock %}
