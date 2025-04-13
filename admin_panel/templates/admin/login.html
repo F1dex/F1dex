@@ -1,240 +1,248 @@
-{% extends "admin/login.html" %}
 {% load i18n static %}
 
-{% block extrastyle %}
-{{ block.super }}
-<link rel="stylesheet" href="{% static 'admin/css/override.css' %}">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>F1Dex Login</title>
+  <link rel="stylesheet" href="{% static 'admin/css/override.css' %}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
 
-  body.login {
-    font-family: 'Orbitron', sans-serif;
-    height: 100vh;
-    background: black;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-  }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  .intro-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: black;
-    z-index: 999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    opacity: 1;
-    animation: fadeOutScreen 1s ease 2.5s forwards;
-  }
+    body {
+      font-family: 'Orbitron', sans-serif;
+      height: 100vh;
+      background: black;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
 
-  .intro-text {
-    opacity: 0;
-    font-size: 2.5rem;
-    letter-spacing: 2px;
-    animation: fadeInText 1.5s ease forwards;
-    animation-delay: 1s;
-  }
-
-  @keyframes fadeInText {
-    to {
+    .intro-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+      z-index: 999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
       opacity: 1;
+      animation: fadeOutScreen 1s ease 2.5s forwards;
     }
-  }
 
-  @keyframes fadeOutScreen {
-    to {
+    .intro-text {
       opacity: 0;
-      visibility: hidden;
+      font-size: 2.5rem;
+      letter-spacing: 2px;
+      animation: fadeInText 1.5s ease forwards;
+      animation-delay: 1s;
     }
-  }
 
-  #content-main {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 1s ease, transform 1s ease;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(8px);
-    padding: 3rem;
-    border-radius: 15px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
-    border: 1px solid #d71a28;
-  }
+    @keyframes fadeInText {
+      to {
+        opacity: 1;
+      }
+    }
 
-  #content-main.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    @keyframes fadeOutScreen {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
 
-  .form-header {
-    text-align: center;
-    margin-bottom: 2rem;
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #d71a28;
-    text-shadow: 0 0 10px rgba(215, 26, 40, 0.7);
-  }
+    #content-main {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1s ease, transform 1s ease;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      padding: 3rem;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+      border: 1px solid #d71a28;
+      display: none;
+    }
 
-  .form-row {
-    margin-bottom: 1.5rem;
-  }
+    #content-main.show {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-  .form-row label {
-    color: #eee;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-  }
+    .form-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #d71a28;
+      text-shadow: 0 0 10px rgba(215, 26, 40, 0.7);
+    }
 
-  .form-row input {
-    width: 100%;
-    padding: 0.9em;
-    background-color: #222;
-    border: 1px solid #444;
-    color: #fff;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease-in-out;
-  }
+    .form-row {
+      margin-bottom: 1.5rem;
+    }
 
-  .form-row input:focus {
-    outline: none;
-    border-color: #d71a28;
-    background-color: #333;
-  }
+    .form-row label {
+      color: #eee;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
 
-  .submit-row input[type="submit"],
-  .discord-button {
-    background: #d71a28;
-    color: white;
-    font-weight: bold;
-    padding: 1em;
-    width: 100%;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    font-size: 1.1rem;
-  }
+    .form-row input {
+      width: 100%;
+      padding: 0.9em;
+      background-color: #222;
+      border: 1px solid #444;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease-in-out;
+    }
 
-  .submit-row input[type="submit"]:hover,
-  .discord-button:hover {
-    background: #b3121d;
-  }
+    .form-row input:focus {
+      outline: none;
+      border-color: #d71a28;
+      background-color: #333;
+    }
 
-  .discord-row {
-    display: flex;
-    justify-content: center;
-    margin-top: 1rem;
-  }
+    .submit-row input[type="submit"],
+    .discord-button {
+      background: #d71a28;
+      color: white;
+      font-weight: bold;
+      padding: 1em;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      font-size: 1.1rem;
+    }
 
-  .discord-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    padding: 1em;
-    width: 100%;
-    background: #5865F2;
-    border-radius: 8px;
-    transition: background 0.2s ease;
-  }
+    .submit-row input[type="submit"]:hover,
+    .discord-button:hover {
+      background: #b3121d;
+    }
 
-  .discord-button:hover {
-    background: #4e54e5;
-  }
+    .discord-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 1rem;
+    }
 
-  .discord-icon {
-    width: 24px;
-    height: 24px;
-    margin-right: 0.7em;
-  }
+    .discord-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      padding: 1em;
+      width: 100%;
+      background: #5865F2;
+      border-radius: 8px;
+      transition: background 0.2s ease;
+    }
 
-  .errornote {
-    color: #ff3b3b;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 1.5rem;
-  }
-</style>
-{% endblock %}
+    .discord-button:hover {
+      background: #4e54e5;
+    }
 
-{% block content %}
-<div class="intro-screen">
-  <div class="intro-text">Welcome to F1Dex</div>
-</div>
+    .discord-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 0.7em;
+    }
 
-<div id="content-main">
-  <div class="form-header">F1Dex Administration</div>
+    .errornote {
+      color: #ff3b3b;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
 
-  {% if form.errors and not form.non_field_errors %}
-  <p class="errornote">
-    {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
-  </p>
-  {% endif %}
-
-  {% if form.non_field_errors %}
-    {% for error in form.non_field_errors %}
-      <p class="errornote">{{ error }}</p>
-    {% endfor %}
-  {% endif %}
-
-  {% if user.is_authenticated %}
-  <p class="errornote">
-    {% blocktranslate trimmed %}
-      You are authenticated as {{ username }}, but are not authorized to
-      access this page. Would you like to login to a different account?
-    {% endblocktranslate %}
-  </p>
-  {% endif %}
-
-  <form action="{{ app_path }}" method="post" id="login-form" style="{% if not pwlogin %}display:none;{% endif %}">{% csrf_token %}
-    <div class="form-row">
-      {{ form.username.errors }}
-      {{ form.username.label_tag }} {{ form.username }}
-    </div>
-    <div class="form-row">
-      {{ form.password.errors }}
-      {{ form.password.label_tag }} {{ form.password }}
-      <input type="hidden" name="next" value="{{ next }}">
-    </div>
-    {% url 'admin_password_reset' as password_reset_url %}
-    {% if password_reset_url %}
-    <div class="password-reset-link" style="margin-bottom: 1rem; text-align: center;">
-      <a href="{{ password_reset_url }}" style="color: #bbb;">{% translate 'Forgotten your login credentials?' %}</a>
-    </div>
-    {% endif %}
-    <div class="submit-row">
-      <input type="submit" value="{% translate 'Log in' %}">
-    </div>
-  </form>
-
-  <div class="discord-row">
-    <a href="{% url "social:begin" "discord" %}" class="button discord-button {% if "discord" not in backends.backends %}disabled{% endif %}">
-      <img src="{% static "admin/img/discord.svg" %}" class="discord-icon"/>
-      <div class="discord-text">Login with Discord</div>
-    </a>
+  <div class="intro-screen">
+    <div class="intro-text">Welcome to F1Dex</div>
   </div>
-</div>
 
-<script>
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      document.querySelector('#content-main').classList.add('show');
-    }, 2600);
-  });
-</script>
-{% endblock %}
+  <div id="content-main">
+    <div class="form-header">F1Dex Administration</div>
+
+    {% if form.errors and not form.non_field_errors %}
+    <p class="errornote">
+      {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+    </p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+      {% for error in form.non_field_errors %}
+        <p class="errornote">{{ error }}</p>
+      {% endfor %}
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <p class="errornote">
+      {% blocktranslate trimmed %}
+        You are authenticated as {{ username }}, but are not authorized to
+        access this page. Would you like to login to a different account?
+      {% endblocktranslate %}
+    </p>
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" id="login-form" style="{% if not pwlogin %}display:none;{% endif %}">{% csrf_token %}
+      <div class="form-row">
+        {{ form.username.errors }}
+        {{ form.username.label_tag }} {{ form.username }}
+      </div>
+      <div class="form-row">
+        {{ form.password.errors }}
+        {{ form.password.label_tag }} {{ form.password }}
+        <input type="hidden" name="next" value="{{ next }}">
+      </div>
+      {% url 'admin_password_reset' as password_reset_url %}
+      {% if password_reset_url %}
+      <div class="password-reset-link" style="margin-bottom: 1rem; text-align: center;">
+        <a href="{{ password_reset_url }}" style="color: #bbb;">{% translate 'Forgotten your login credentials?' %}</a>
+      </div>
+      {% endif %}
+      <div class="submit-row">
+        <input type="submit" value="{% translate 'Log in' %}">
+      </div>
+    </form>
+
+    <div class="discord-row">
+      <a href="{% url "social:begin" "discord" %}" class="button discord-button {% if "discord" not in backends.backends %}disabled{% endif %}">
+        <img src="{% static "admin/img/discord.svg" %}" class="discord-icon"/>
+        <div class="discord-text">Login with Discord</div>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.querySelector('#content-main').classList.add('show');
+      }, 2600);
+    });
+  </script>
+
+</body>
+</html>
