@@ -1,0 +1,209 @@
+{% load i18n static %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">
+<head>
+  <title>{% block title %}Admin{% endblock %}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;600&family=Inter:wght@300;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'admin/css/base.css' %}">
+  {% block dark-mode-vars %}
+    <link rel="stylesheet" href="{% static 'admin/css/dark_mode.css' %}">
+    <script src="{% static 'admin/js/theme.js' %}"></script>
+  {% endblock %}
+  {% if not is_popup and is_nav_sidebar_enabled %}
+    <link rel="stylesheet" href="{% static 'admin/css/nav_sidebar.css' %}">
+    <script src="{% static 'admin/js/nav_sidebar.js' %}" defer></script>
+  {% endif %}
+  {% if LANGUAGE_BIDI %}
+    <link rel="stylesheet" href="{% static 'admin/css/rtl.css' %}">
+  {% endif %}
+  <link rel="stylesheet" href="{% static 'admin/css/responsive.css' %}">
+  {% if LANGUAGE_BIDI %}<link rel="stylesheet" href="{% static 'admin/css/responsive_rtl.css' %}">{% endif %}
+
+  <style>
+    :root {
+      --f1-red: #ff0a0a;
+      --bg-dark: #121212;
+      --bg-light: #f9f9f9;
+      --card-glow: rgba(255, 10, 10, 0.15);
+    }
+
+    body {
+      font-family: 'Inter', 'Oxanium', sans-serif;
+      background-color: var(--bg-dark);
+      color: #f5f5f5;
+      transition: all 0.3s ease;
+    }
+
+    a {
+      color: var(--f1-red);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-shadow: 0 0 5px var(--f1-red);
+    }
+
+    header, #branding {
+      background: rgba(18, 18, 18, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--card-glow);
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 10px var(--card-glow);
+    }
+
+    #branding a {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--f1-red);
+    }
+
+    #user-tools {
+      font-size: 0.9rem;
+      float: right;
+    }
+
+    .breadcrumbs {
+      margin: 1rem 2rem;
+      color: #aaa;
+    }
+
+    #content {
+      background: rgba(255, 255, 255, 0.03);
+      margin: 2rem;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 0 20px var(--card-glow);
+      transition: all 0.3s ease;
+    }
+
+    h1, h2 {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 600;
+      color: var(--f1-red);
+    }
+
+    button, .button {
+      background-color: var(--f1-red);
+      border: none;
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover, .button:hover {
+      background-color: #ff2e2e;
+      box-shadow: 0 0 10px var(--f1-red);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      color: #777;
+      font-size: 0.8rem;
+    }
+
+    .messagelist {
+      list-style: none;
+      padding: 1rem;
+      margin: 0 0 2rem 0;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+    }
+
+    .messagelist li {
+      padding: 0.4rem 0;
+    }
+  </style>
+
+  {% block extrastyle %}{% endblock %}
+  {% block extrahead %}{% endblock %}
+  <meta name="robots" content="NONE,NOARCHIVE">
+</head>
+
+<body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}"
+  data-admin-utc-offset="{% now "Z" %}">
+
+<a href="#content-start" class="skip-to-content-link">{% translate 'Skip to main content' %}</a>
+
+<div id="container">
+
+  {% block header %}
+    <header id="header">
+      <div id="branding">{% block branding %}{% endblock %}</div>
+      {% block usertools %}
+        {% if has_permission %}
+        <div id="user-tools">
+          {% block welcome-msg %}
+            {% translate 'Welcome,' %} <strong>{% firstof user.get_short_name user.get_username %}</strong>.
+          {% endblock %}
+          {% block userlinks %}
+            {% if site_url %}
+              <a href="{{ site_url }}">{% translate 'View site' %}</a> /
+            {% endif %}
+            {% if user.has_usable_password %}
+              <a href="{% url 'admin:password_change' %}">{% translate 'Change password' %}</a> /
+            {% endif %}
+            <form id="logout-form" method="post" action="{% url 'admin:logout' %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit">{% translate 'Log out' %}</button>
+            </form>
+            {% include "admin/color_theme_toggle.html" %}
+          {% endblock %}
+        </div>
+        {% endif %}
+      {% endblock %}
+    </header>
+  {% endblock %}
+
+  {% block nav-breadcrumbs %}
+    <nav>
+      <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+        {% if title %} &rsaquo; {{ title }}{% endif %}
+      </div>
+    </nav>
+  {% endblock %}
+
+  <div class="main" id="main">
+    {% if not is_popup and is_nav_sidebar_enabled %}
+      {% block nav-sidebar %}
+        {% include "admin/nav_sidebar.html" %}
+      {% endblock %}
+    {% endif %}
+
+    <main id="content-start" class="content" tabindex="-1">
+      {% block messages %}
+        {% if messages %}
+        <ul class="messagelist">{% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+        {% endfor %}</ul>
+        {% endif %}
+      {% endblock %}
+      <div id="content" class="{% block coltype %}colM{% endblock %}">
+        {% block pretitle %}{% endblock %}
+        {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+        {% block object-tools %}{% endblock %}
+        {% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}</h2>{% endif %}{% endblock %}
+        {% block content %}{{ content }}{% endblock %}
+        {% block sidebar %}{% endblock %}
+        <br class="clear">
+      </div>
+    </main>
+  </div>
+
+  <footer id="footer">
+    {% block footer %}{% endblock %}
+  </footer>
+</div>
+
+{% block extrabody %}{% endblock %}
+</body>
+</html>
