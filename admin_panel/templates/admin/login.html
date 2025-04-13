@@ -3,7 +3,7 @@
 
 {% block extrastyle %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static "admin/css/override.css" %}">
+<link rel="stylesheet" href="{% static 'admin/css/override.css' %}">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
 
@@ -14,45 +14,54 @@
     background-size: cover;
     font-family: 'Orbitron', sans-serif;
     color: #fff;
-  }
-
-  #content {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
   }
 
   #content-main {
-    background-color: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
     padding: 3rem;
     border-radius: 15px;
-    box-shadow: 0 0 40px rgba(255, 0, 0, 0.4);
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+    border: 1px solid #d71a28;
+    transition: transform 0.3s ease-in-out;
   }
 
-  .form-row,
-  .password-reset-link,
-  .submit-row,
-  .discord-row {
+  #content-main:hover {
+    transform: scale(1.02);
+  }
+
+  .form-row {
     margin-bottom: 1.5rem;
   }
 
   .form-row label {
-    display: block;
-    margin-bottom: 0.4rem;
     color: #eee;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
   }
 
   .form-row input {
     width: 100%;
-    padding: 0.7em;
-    background: #111;
+    padding: 0.9em;
+    background-color: #222;
     border: 1px solid #444;
     color: #fff;
-    border-radius: 6px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .form-row input:focus {
+    outline: none;
+    border-color: #d71a28;
+    background-color: #333;
   }
 
   .submit-row input[type="submit"],
@@ -60,12 +69,13 @@
     background: #d71a28;
     color: white;
     font-weight: bold;
-    padding: 0.8em 1.5em;
+    padding: 1em;
     width: 100%;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s ease;
+    font-size: 1.1rem;
   }
 
   .submit-row input[type="submit"]:hover,
@@ -73,29 +83,66 @@
     background: #b3121d;
   }
 
+  .discord-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
   .discord-button {
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
+    padding: 1em;
+    width: 100%;
+    background: #5865F2;
+    border-radius: 8px;
+    transition: background 0.2s ease;
   }
 
-  .discord-button.disabled {
-    background-color: #555;
-    pointer-events: none;
+  .discord-button:hover {
+    background: #4e54e5;
   }
 
   .discord-icon {
     width: 24px;
     height: 24px;
-    margin-right: 0.5em;
+    margin-right: 0.7em;
   }
 
   .errornote {
     color: #ff3b3b;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .successnote {
+    color: #3ddc84;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .spinner {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .spinner::before {
+    content: '';
+    display: inline-block;
+    width: 3em;
+    height: 3em;
+    border: 4px solid transparent;
+    border-top-color: #d71a28;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 </style>
 {% endblock %}
@@ -114,7 +161,6 @@
 {% endif %}
 
 <div id="content-main">
-
   {% if user.is_authenticated %}
   <p class="errornote">
     {% blocktranslate trimmed %}
