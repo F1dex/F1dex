@@ -1,254 +1,213 @@
-{% load i18n static %}
-<!DOCTYPE html>
+{% load i18n static %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">
 <head>
+<meta charset="utf-8">
 <title>{% block title %}{% endblock %}</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="NONE,NOARCHIVE">
 <style>
-  :root {
-    --primary-red: #e10600;
-    --black: #0f0f0f;
-    --dark-grey: #1c1c1c;
-    --text-light: #f5f5f5;
-    --transition-speed: 0.3s;
-    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  }
-
-  body {
-    background-color: var(--black);
-    color: var(--text-light);
-    font-family: var(--font-family);
-    margin: 0;
-    padding: 0;
-    transition: background-color var(--transition-speed), color var(--transition-speed);
-  }
-
-  a {
-    color: var(--primary-red);
-    text-decoration: none;
-    transition: color var(--transition-speed);
-  }
-
-  a:hover {
-    color: #ff4b4b;
-  }
-
-  header, footer {
-    background-color: var(--dark-grey);
-    padding: 1rem 2rem;
-    border-bottom: 2px solid var(--primary-red);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  #branding h1, #branding h2 {
-    margin: 0;
-    color: var(--primary-red);
-  }
-
-  #user-tools {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  #user-tools button {
-    background: var(--primary-red);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 1rem;
-    cursor: pointer;
-    transition: background-color var(--transition-speed);
-  }
-
-  #user-tools button:hover {
-    background: #ff4b4b;
-  }
-
-  .content {
-    padding: 2rem;
-    animation: fadeInUp 0.8s ease;
-  }
-
-  .breadcrumbs {
-    padding: 1rem 2rem;
-    background-color: var(--dark-grey);
-    border-bottom: 1px solid var(--primary-red);
-  }
-
-  h1, h2 {
-    font-weight: 600;
-    margin: 0.5rem 0;
-  }
-
-  ul.messagelist {
-    list-style: none;
-    padding: 0;
-    margin-bottom: 1rem;
-    animation: fadeIn 0.5s ease;
-  }
-
-  ul.messagelist li {
-    padding: 1rem;
-    background: #222;
-    border-left: 4px solid var(--primary-red);
-    margin-bottom: 0.5rem;
-  }
-
-  .nav-sidebar {
-    background-color: var(--dark-grey);
-    padding: 1rem;
-    border-right: 2px solid var(--primary-red);
-  }
-
-  footer {
-    border-top: 2px solid var(--primary-red);
-    text-align: center;
-    font-size: 0.875rem;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .skip-to-content-link {
-    position: absolute;
-    left: -999px;
-    top: auto;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-  }
-
-  .skip-to-content-link:focus {
-    left: 10px;
-    top: 10px;
-    width: auto;
-    height: auto;
-    padding: 1rem;
-    background: var(--primary-red);
-    color: white;
-    z-index: 1000;
-  }
+:root {
+  --red: #ff0033;
+  --black: #0a0a0a;
+  --gray: #1a1a1a;
+  --white: #f5f5f7;
+  --font: 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html {
+  font-family: var(--font);
+  background-color: var(--black);
+  color: var(--white);
+  scroll-behavior: smooth;
+}
+a {
+  color: var(--red);
+  text-decoration: none;
+  transition: var(--transition);
+}
+a:hover {
+  text-shadow: 0 0 5px var(--red);
+}
+button {
+  background: var(--red);
+  color: var(--white);
+  border: none;
+  padding: 0.5em 1em;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+button:hover {
+  background: #e6002c;
+  transform: scale(1.05);
+}
+header, footer, nav, main {
+  animation: fadeIn 1s ease-out both;
+}
+header {
+  background: var(--black);
+  border-bottom: 1px solid var(--gray);
+  padding: 1em 2em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#branding {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--red);
+}
+#user-tools {
+  display: flex;
+  gap: 1em;
+  align-items: center;
+}
+#container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2em;
+}
+.breadcrumbs {
+  margin: 1em 0;
+  color: var(--gray);
+}
+h1, h2 {
+  margin-bottom: 1rem;
+  letter-spacing: 0.5px;
+}
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+h2 {
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--gray);
+}
+.messagelist {
+  list-style: none;
+  margin-bottom: 1.5rem;
+}
+.messagelist li {
+  padding: 1em;
+  background: var(--gray);
+  border-left: 5px solid var(--red);
+  margin-bottom: 0.5em;
+  animation: slideIn 0.6s ease-out;
+}
+.content {
+  padding: 2em 0;
+}
+.skip-to-content-link {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.skip-to-content-link:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0.5em;
+  background: var(--red);
+  color: var(--white);
+}
+footer {
+  text-align: center;
+  padding: 2em;
+  color: var(--gray);
+  border-top: 1px solid var(--gray);
+  margin-top: 4em;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 </style>
-
-{% block dark-mode-vars %}{% endblock %}
-{% block extrastyle %}{% endblock %}
-{% block extrahead %}{% endblock %}
-{% block responsive %}
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-{% endblock %}
-{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
 </head>
-
-<body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}"
-  data-admin-utc-offset="{% now "Z" %}">
+<body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}" data-admin-utc-offset="{% now "Z" %}">
 <a href="#content-start" class="skip-to-content-link">{% translate 'Skip to main content' %}</a>
 <div id="container">
-
-  {% if not is_popup %}
-  {% block header %}
-    <header id="header">
-      <div id="branding">
-      {% block branding %}<h1>{% translate "Admin Panel" %}</h1>{% endblock %}
-      </div>
-      {% block usertools %}
-      {% if has_permission %}
-      <div id="user-tools">
-        {% block welcome-msg %}
-          {% translate 'Welcome,' %}
-          <strong>{% firstof user.get_short_name user.get_username %}</strong>.
-        {% endblock %}
-        {% block userlinks %}
-          {% if site_url %}
-            <a href="{{ site_url }}">{% translate 'View site' %}</a> /
-          {% endif %}
-          {% if user.is_active and user.is_staff %}
-            {% url 'django-admindocs-docroot' as docsroot %}
-            {% if docsroot %}
-              <a href="{{ docsroot }}">{% translate 'Documentation' %}</a> /
-            {% endif %}
-          {% endif %}
-          {% if user.has_usable_password %}
-            <a href="{% url 'admin:password_change' %}">{% translate 'Change password' %}</a> /
-          {% endif %}
-          <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
-            {% csrf_token %}
-            <button type="submit">{% translate 'Log out' %}</button>
-          </form>
-          {% include "admin/color_theme_toggle.html" %}
-        {% endblock %}
-      </div>
-      {% endif %}
-      {% endblock %}
-      {% block nav-global %}{% endblock %}
-    </header>
-  {% endblock %}
-
-  {% block nav-breadcrumbs %}
-    <nav aria-label="{% translate 'Breadcrumbs' %}">
-      {% block breadcrumbs %}
-        <div class="breadcrumbs">
-          <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-          {% if title %} &rsaquo; {{ title }}{% endif %}
+    {% if not is_popup %}
+    {% block header %}
+      <header id="header">
+        <div id="branding">{% block branding %}{% endblock %}</div>
+        {% block usertools %}
+        {% if has_permission %}
+        <div id="user-tools">
+            {% block welcome-msg %}
+                {% translate 'Welcome,' %}
+                <strong>{% firstof user.get_short_name user.get_username %}</strong>.
+            {% endblock %}
+            {% block userlinks %}
+                {% if site_url %}<a href="{{ site_url }}">{% translate 'View site' %}</a>{% endif %}
+                {% if user.is_active and user.is_staff %}
+                    {% url 'django-admindocs-docroot' as docsroot %}
+                    {% if docsroot %}/ <a href="{{ docsroot }}">{% translate 'Documentation' %}</a>{% endif %}
+                {% endif %}
+                {% if user.has_usable_password %}/ <a href="{% url 'admin:password_change' %}">{% translate 'Change password' %}</a>{% endif %}
+                <form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+                    {% csrf_token %}<button type="submit">{% translate 'Log out' %}</button>
+                </form>
+                {% include "admin/color_theme_toggle.html" %}
+            {% endblock %}
         </div>
-      {% endblock %}
-    </nav>
-  {% endblock %}
-  {% endif %}
-
-  <div class="main" id="main">
-    {% if not is_popup and is_nav_sidebar_enabled %}
-      {% block nav-sidebar %}
-        {% include "admin/nav_sidebar.html" %}
-      {% endblock %}
-    {% endif %}
-    <main id="content-start" class="content" tabindex="-1">
-      {% block messages %}
-        {% if messages %}
-          <ul class="messagelist">{% for message in messages %}
-            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
-          {% endfor %}</ul>
         {% endif %}
-      {% endblock messages %}
-
-      <div id="content" class="{% block coltype %}colM{% endblock %}">
-        {% block pretitle %}{% endblock %}
-        {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
-        {% block object-tools %}{% endblock %}
-        {% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}</h2>{% endif %}{% endblock %}
-        {% block content %}
-          {{ content }}
         {% endblock %}
-        {% block sidebar %}{% endblock %}
-        <br class="clear">
-      </div>
-    </main>
-  </div>
-
-  <footer id="footer">{% block footer %}{% translate "Powered by Django" %}{% endblock %}</footer>
+        {% block nav-global %}{% endblock %}
+      </header>
+    {% endblock %}
+    {% block nav-breadcrumbs %}
+      <nav aria-label="{% translate 'Breadcrumbs' %}">
+        {% block breadcrumbs %}
+          <div class="breadcrumbs">
+            <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+            {% if title %} &rsaquo; {{ title }}{% endif %}
+          </div>
+        {% endblock %}
+      </nav>
+    {% endblock %}
+    {% endif %}
+    <div class="main" id="main">
+      {% if not is_popup and is_nav_sidebar_enabled %}
+        {% block nav-sidebar %}
+          {% include "admin/nav_sidebar.html" %}
+        {% endblock %}
+      {% endif %}
+      <main id="content-start" class="content" tabindex="-1">
+        {% block messages %}
+          {% if messages %}
+            <ul class="messagelist">{% for message in messages %}
+              <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+            {% endfor %}</ul>
+          {% endif %}
+        {% endblock messages %}
+        <div id="content" class="{% block coltype %}colM{% endblock %}">
+          {% block pretitle %}{% endblock %}
+          {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+          {% block object-tools %}{% endblock %}
+          {% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}</h2>{% endif %}{% endblock %}
+          {% block content %}{{ content }}{% endblock %}
+          {% block sidebar %}{% endblock %}
+          <br class="clear">
+        </div>
+      </main>
+    </div>
+    <footer id="footer">{% block footer %}{% endblock %}</footer>
 </div>
-
-<svg xmlns="http://www.w3.org/2000/svg" class="base-svgs" style="display:none">
-  <symbol viewBox="0 0 24 24" width="1.5rem" height="1.5rem" id="icon-auto"><path d="M0 0h24v24H0z" fill="currentColor"/><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2V4a8 8 0 1 0 0 16z"/></symbol>
-  <symbol viewBox="0 0 24 24" width="1.5rem" height="1.5rem" id="icon-moon"><path d="M0 0h24v24H0z" fill="currentColor"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol>
-  <symbol viewBox="0 0 24 24" width="1.5rem" height="1.5rem" id="icon-sun"><path d="M0 0h24v24H0z" fill="currentColor"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol>
-</svg>
 {% block extrabody %}{% endblock extrabody %}
 </body>
 </html>
