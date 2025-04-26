@@ -3474,4 +3474,4 @@ dev = ["black", "django-debug-toolbar", "django-types", "flake8", "flake8-pyproj
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13, <3.14"
-content-hash = "0178668d7f133484f55eed4168f44eae8b6a4e6b27d52e280fb7ddcda12a29b5"
+content-hash = "41bda8e00ca9d90bb99dd4d2f9178595f14d21c7c1bac3eb31068f88ba4a9160"
