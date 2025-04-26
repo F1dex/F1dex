@@ -24,6 +24,7 @@ from ballsdex.core.models import (
     specials,
 )
 from ballsdex.settings import settings
+from ballsdex.packages.countryballs.spawn_msgs import spawn_messages_list
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
@@ -229,6 +230,7 @@ class BallSpawnView(View):
             source = string.ascii_uppercase + string.ascii_lowercase + string.ascii_letters
             return "".join(random.choices(source, k=15))
 
+        random_phrase = random.choice(spawn_messages_list)
         extension = self.model.wild_card.split(".")[-1]
         file_location = "./admin_panel/media/" + self.model.wild_card
         file_name = f"nt_{generate_random_name()}.{extension}"
@@ -236,7 +238,7 @@ class BallSpawnView(View):
             permissions = channel.permissions_for(channel.guild.me)
             if permissions.attach_files and permissions.send_messages:
                 self.message = await channel.send(
-                    f"A wild {settings.collectible_name} appeared!",
+                    f"{random_phrase}",
                     view=self,
                     file=discord.File(file_location, filename=file_name),
                 )
