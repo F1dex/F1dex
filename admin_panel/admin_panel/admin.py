@@ -1,10 +1,11 @@
 from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
+
+from ballsdex.settings import settings
 
 
 class BallsdexAdminSite(admin.AdminSite):
-    site_header = "F1Dex Configuration"
-    site_title = "F1Dex admin panel"
+    site_header = f"{settings.bot_name} administration"
+    site_title = f"{settings.bot_name} admin panel"
     site_url = None  # type: ignore
     login_template = "admin/login.html"
     final_catch_all_view = False
