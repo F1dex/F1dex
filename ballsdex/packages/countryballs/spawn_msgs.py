@@ -3,7 +3,7 @@ from ballsdex.settings import settings
 spawn_messages_list = [
     f"A wild {settings.collectible_name} appeared!",
     f"Gentlemen, 30 years ago Niki Lauda told us, a {settings.collectible_name} has appeared.",
-    "No, Kimi, no, you will not have the drink."
+    "No, Kimi, no, you will not have the drink.",
     f"Oh no, I've caused a {settings.collectible_name} to appear.",
     "KI KI KI RAHHH SWEAT SWEAT",
     "Hi!",
