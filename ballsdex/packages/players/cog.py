@@ -275,7 +275,7 @@ class Player(commands.GroupCog):
         if blocked:
             player_unblock = self.block_remove.extras.get("mention", "/player block remove")
             await interaction.response.send_message(
-                "You cannot add a blocked user. To unblock, use " f"{player_unblock}.",
+                f"You cannot add a blocked user. To unblock, use {player_unblock}.",
                 ephemeral=True,
             )
             return

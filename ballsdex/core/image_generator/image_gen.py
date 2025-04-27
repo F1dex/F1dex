@@ -125,7 +125,7 @@ def draw_card(
         (30, 1870),
         # Modifying the line below is breaking the licence as you are removing credits
         # If you don't want to receive a DMCA, just don't
-        "Created by El Laggron\n" f"Artwork author: {ball_credits}",
+        f"Created by El Laggron\nArtwork author: {ball_credits}",
         font=credits_font,
         fill=credits_color,
         stroke_width=0,

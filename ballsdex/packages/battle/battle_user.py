@@ -5,8 +5,7 @@ if TYPE_CHECKING:
     import discord
 
     from ballsdex.core.bot import BallsDexBot
-    from ballsdex.core.models import BallInstance, Player
-    from ballsdex.core.models import Battle
+    from ballsdex.core.models import BallInstance, Battle, Player
 
 
 @dataclass(slots=True)

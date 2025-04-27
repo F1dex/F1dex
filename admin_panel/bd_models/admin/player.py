@@ -67,9 +67,7 @@ class PlayerAdmin(admin.ModelAdmin):
     def blacklisted(self, obj: Player):
         return obj.is_blacklisted()
 
-    @action_with_form(
-        BlacklistActionForm, description="Blacklist the selected users"
-    )  # type: ignore
+    @action_with_form(BlacklistActionForm, description="Blacklist the selected users")  # type: ignore
     def blacklist_users(self, request: "HttpRequest", queryset: "QuerySet[Player]", data: dict):
         reason = (
             data["reason"]
@@ -94,10 +92,10 @@ class PlayerAdmin(admin.ModelAdmin):
 
         self.message_user(
             request,
-            f"Created blacklist for {queryset.count()} user{"s" if queryset.count() > 1 else ""}. "
+            f"Created blacklist for {queryset.count()} user{'s' if queryset.count() > 1 else ''}. "
             "This will be applied after reloading the bot's cache.",
         )
         async_to_sync(notify_admins)(
             f"{request.user} blacklisted players "
-            f'{", ".join([str(x.discord_id) for x in queryset])} for the reason: {data["reason"]}.'
+            f"{', '.join([str(x.discord_id) for x in queryset])} for the reason: {data['reason']}."
         )

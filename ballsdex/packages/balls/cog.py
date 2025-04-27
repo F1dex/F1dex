@@ -65,7 +65,8 @@ class DonationRequest(View):
             item.disabled = True  # type: ignore
         try:
             await self.original_interaction.followup.edit_message(
-                "@original", view=self  # type: ignore
+                "@original",
+                view=self,  # type: ignore
             )
         except discord.NotFound:
             pass
@@ -681,8 +682,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         guild = f" caught in {interaction.guild.name}" if current_server else ""
 
         await interaction.followup.send(
-            f"You have {balls} {special_str}"
-            f"{country}{settings.collectible_name}{plural}{guild}."
+            f"You have {balls} {special_str}{country}{settings.collectible_name}{plural}{guild}."
         )
 
     @app_commands.command()
@@ -901,7 +901,6 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                     f"{settings.plural_collectible_name} yet."
                 )
             else:
-
                 await interaction.followup.send(
                     f"You don't have any {settings.plural_collectible_name} yet."
                 )

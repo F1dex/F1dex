@@ -23,8 +23,8 @@ from ballsdex.core.models import (
     balls,
     specials,
 )
-from ballsdex.settings import settings
 from ballsdex.packages.countryballs.spawn_msgs import spawn_messages_list
+from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
@@ -44,7 +44,10 @@ class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name
         self.view = view
 
     async def on_error(
-        self, interaction: discord.Interaction["BallsDexBot"], error: Exception, /  # noqa: W504
+        self,
+        interaction: discord.Interaction["BallsDexBot"],
+        error: Exception,
+        /,  # noqa: W504
     ) -> None:
         log.exception("An error occured in countryball catching prompt", exc_info=error)
         if interaction.response.is_done():

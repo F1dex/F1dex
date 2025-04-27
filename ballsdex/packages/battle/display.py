@@ -97,21 +97,21 @@ def fill_battle_embed_fields(
         # to do this, we add a 3rd empty field on each line (since 3 fields per line)
         i = 1
         while i < len(battler1_proposal) or i < len(battler2_proposal):
-            embed.add_field(name="\u200B", value="\u200B", inline=True)  # empty
+            embed.add_field(name="\u200b", value="\u200b", inline=True)  # empty
 
             if i < len(battler1_proposal):
-                embed.add_field(name="\u200B", value=battler1_proposal[i], inline=True)
+                embed.add_field(name="\u200b", value=battler1_proposal[i], inline=True)
             else:
-                embed.add_field(name="\u200B", value="\u200B", inline=True)
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
 
             if i < len(battler2_proposal):
-                embed.add_field(name="\u200B", value=battler2_proposal[i], inline=True)
+                embed.add_field(name="\u200b", value=battler2_proposal[i], inline=True)
             else:
-                embed.add_field(name="\u200B", value="\u200B", inline=True)
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
             i += 1
 
         # always add an empty field at the end, otherwise the alignment is off
-        embed.add_field(name="\u200B", value="\u200B", inline=True)
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
 
     if len(embed) > 6000:
         if not compact:

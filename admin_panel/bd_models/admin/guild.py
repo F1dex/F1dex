@@ -72,9 +72,7 @@ class GuildAdmin(admin.ModelAdmin):
     def blacklisted(self, obj: GuildConfig):
         return BlacklistedGuild.objects.filter(discord_id=obj.guild_id).exists()
 
-    @action_with_form(
-        BlacklistActionForm, description="Blacklist the selected guilds"
-    )  # type: ignore
+    @action_with_form(BlacklistActionForm, description="Blacklist the selected guilds")  # type: ignore
     def blacklist_guilds(
         self, request: "HttpRequest", queryset: "QuerySet[GuildConfig]", data: dict
     ):
@@ -104,10 +102,10 @@ class GuildAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             f"Created blacklist for {queryset.count()} guild"
-            f"{"s" if queryset.count() > 1 else ""}. This will be applied after "
+            f"{'s' if queryset.count() > 1 else ''}. This will be applied after "
             "reloading the bot's cache.",
         )
         async_to_sync(notify_admins)(
             f"{request.user} blacklisted guilds "
-            f'{", ".join([str(x.guild_id) for x in queryset])} for the reason: {data["reason"]}.'
+            f"{', '.join([str(x.guild_id) for x in queryset])} for the reason: {data['reason']}."
         )

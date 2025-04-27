@@ -33,5 +33,8 @@ async def notify_admins(
     async with aiohttp.ClientSession() as session:
         webhook = discord.Webhook.from_url(settings.webhook_url, session=session)
         return await webhook.send(
-            message, username="Ballsdex admin panel", wait=wait, **kwargs  # type: ignore
+            message,
+            username="Ballsdex admin panel",
+            wait=wait,
+            **kwargs,  # type: ignore
         )

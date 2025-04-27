@@ -164,7 +164,6 @@ async def configure_status(
     async with aiohttp.ClientSession(
         base_url=DISCORD_API, headers=headers, raise_for_status=True
     ) as session:
-
         # check if user owns the application, or is part of the team and team members are co owners
         async with session.get("applications/@me") as resp:
             info = await resp.json()

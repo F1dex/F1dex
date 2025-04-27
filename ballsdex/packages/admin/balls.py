@@ -71,7 +71,8 @@ class Balls(app_commands.Group):
                 )
                 await asyncio.sleep(5)
             await interaction.followup.edit_message(
-                "@original", content="Spawn bomb seems to have timed out."  # type: ignore
+                "@original",
+                content="Spawn bomb seems to have timed out.",  # type: ignore
             )
 
         await interaction.response.send_message(
@@ -200,7 +201,7 @@ class Balls(app_commands.Group):
             await log_action(
                 f"{interaction.user} spawned {settings.collectible_name} {ball.name} "
                 f"in {channel or interaction.channel}"
-                f"{f" ({", ".join(special_attrs)})" if special_attrs else ""}.",
+                f"{f' ({", ".join(special_attrs)})' if special_attrs else ''}.",
                 interaction.client,
             )
 
@@ -503,13 +504,11 @@ class Balls(app_commands.Group):
         special_str = f"{special.name} " if special else ""
         if user:
             await interaction.followup.send(
-                f"{user} has {balls} {special_str}"
-                f"{country}{settings.collectible_name}{plural}."
+                f"{user} has {balls} {special_str}{country}{settings.collectible_name}{plural}."
             )
         else:
             await interaction.followup.send(
-                f"There {verb} {balls} {special_str}"
-                f"{country}{settings.collectible_name}{plural}."
+                f"There {verb} {balls} {special_str}{country}{settings.collectible_name}{plural}."
             )
 
     @app_commands.command(name="create")

@@ -99,7 +99,9 @@ class Pages(discord.ui.View):
         if kwargs is not None:
             if interaction.response.is_done():
                 await interaction.followup.edit_message(
-                    "@original", **kwargs, view=self  # type: ignore
+                    "@original",
+                    **kwargs,
+                    view=self,  # type: ignore
                 )
             else:
                 await interaction.response.edit_message(**kwargs, view=self)
@@ -165,7 +167,8 @@ class Pages(discord.ui.View):
             item.disabled = True  # type: ignore
         try:
             await self.original_interaction.followup.edit_message(
-                "@original", view=self  # type: ignore
+                "@original",
+                view=self,  # type: ignore
             )
         except discord.HTTPException:
             pass

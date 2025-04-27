@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, cast
 import discord
 from discord.ui import Button, View, button
 
-from ballsdex.packages.battle.display import fill_battle_embed_fields
 from ballsdex.packages.battle.battle_user import BattlingUser
+from ballsdex.packages.battle.display import fill_battle_embed_fields
 from ballsdex.settings import settings
 
 if TYPE_CHECKING:
@@ -176,8 +176,7 @@ class BattleMenu:
             f"*This battle expires {timestamp}.*"
         )
         self.embed.set_footer(
-            text="This message is updated every 15 seconds, "
-            "but you can keep on editing your deck."
+            text="This message is updated every 15 seconds, but you can keep on editing your deck."
         )
 
     async def update_message_loop(self):

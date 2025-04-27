@@ -69,7 +69,7 @@ def sort_balls(
         return (
             queryset.select_related("ball")
             .annotate(
-                stats=RawSQL("ballinstance__ball.health + " "ballinstance__ball.attack :: BIGINT")
+                stats=RawSQL("ballinstance__ball.health + ballinstance__ball.attack :: BIGINT")
             )
             .order_by("-stats")
         )

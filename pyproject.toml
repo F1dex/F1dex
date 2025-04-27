@@ -95,7 +95,7 @@ line_length = 99
 
 [tool.ruff]
 line-length = 99
-lint.ignore = ["E203"]
+lint.ignore = ["E203", "F403", "F405"]
 lint.extend-select = ["E501", "I001", "W291", "W292", "W293"]
 exclude = ["./admin_panel/bd_models/migrations/*.py"]
 

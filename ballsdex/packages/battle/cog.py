@@ -9,11 +9,11 @@ from discord.utils import MISSING
 from ballsdex.core.models import Player
 from ballsdex.core.utils.transformers import (
     BallInstanceTransform,
+    BattleCommandType,
     SpecialEnabledTransform,
 )
-from ballsdex.core.utils.transformers import BattleCommandType
-from ballsdex.packages.battle.menu import BattleMenu
 from ballsdex.packages.battle.battle_user import BattlingUser
+from ballsdex.packages.battle.menu import BattleMenu
 from ballsdex.settings import settings
 
 if TYPE_CHECKING:

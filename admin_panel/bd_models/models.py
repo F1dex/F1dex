@@ -252,7 +252,6 @@ class Ball(models.Model):
         using: str | None = None,
         update_fields: Iterable[str] | None = None,
     ) -> None:
-
         def lower_catch_names(names: str | None) -> str | None:
             if names:
                 return ";".join([x.strip() for x in names.split(";")]).lower()

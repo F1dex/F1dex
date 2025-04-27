@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 class ApproxCountPaginator(Paginator):
     @cached_property
     def count(self):
-
         # if this object isn't empty, then it's a paginator that has been applied filters or search
         if self.object_list.query.where.children:  # type: ignore
             return super().count
