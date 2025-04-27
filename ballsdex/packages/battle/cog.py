@@ -90,7 +90,12 @@ class Battle(commands.GroupCog):
         return (battle, battler)
 
     @app_commands.command()
-    async def begin(self, interaction: discord.Interaction["BallsDexBot"], user: discord.User):
+    async def begin(
+        self,
+        interaction: discord.Interaction["BallsDexBot"],
+        user: discord.User,
+        max_countryballs: int | None = 10,
+    ):
         """
         Begin a battle with the chosen user.
 
@@ -98,6 +103,8 @@ class Battle(commands.GroupCog):
         ----------
         user: discord.User
             The user you want to battle with.
+        max_countryballs: int | None
+            The maximum number of countryballs you can use in the battle, 10 if empty.
         """
         if user.bot:
             await interaction.response.send_message("You cannot battle with bots.", ephemeral=True)
@@ -105,6 +112,13 @@ class Battle(commands.GroupCog):
         if user.id == interaction.user.id:
             await interaction.response.send_message(
                 "You cannot battle with yourself.", ephemeral=True
+            )
+            return
+
+        if max_countryballs > 50:
+            await interaction.response.send_message(
+                f"You cannot battle with more than 50 {settings.plural_collectible_name}.",
+                ephemeral=True,
             )
             return
 
@@ -130,7 +144,11 @@ class Battle(commands.GroupCog):
             return
 
         menu = BattleMenu(
-            self, interaction, BattlingUser(interaction.user, player1), BattlingUser(user, player2)
+            self,
+            interaction,
+            BattlingUser(interaction.user, player1),
+            BattlingUser(user, player2),
+            max_drivers=max_countryballs or 10,
         )
         self.battles[interaction.guild.id][interaction.channel.id].append(menu)  # type: ignore
         await menu.start()
@@ -178,6 +196,13 @@ class Battle(commands.GroupCog):
             await interaction.followup.send(
                 f"This {settings.collectible_name} is currently in an active battle, trade or "
                 "donation, please try again later.",
+                ephemeral=True,
+            )
+            return
+        if battle.max_drivers and len(battler.proposal) >= battle.max_drivers:
+            await interaction.followup.send(
+                f"You cannot have more than {battle.max_drivers} "
+                f"{settings.plural_collectible_name} in your deck.",
                 ephemeral=True,
             )
             return

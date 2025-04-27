@@ -142,12 +142,14 @@ class BattleMenu:
         interaction: discord.Interaction["BallsDexBot"],
         battler1: BattlingUser,
         battler2: BattlingUser,
+        max_drivers: int = 10,
     ):
         self.cog = cog
         self.bot = interaction.client
         self.channel: discord.TextChannel = cast(discord.TextChannel, interaction.channel)
         self.battler1 = battler1
         self.battler2 = battler2
+        self.max_drivers = max_drivers
         self.embed = discord.Embed()
         self.task: asyncio.Task | None = None
         self.current_view: BattleView | ConfirmView = BattleView(self)
