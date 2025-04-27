@@ -93,8 +93,11 @@ exclude = "./admin_panel/admin_panel/settings/*"
 profile = "black"
 line_length = 99
 
-[tool.pyright]
-extraPaths = ["./admin_panel"]
-pythonVersion = "3.13"
-reportIncompatibleMethodOverride = "warning"
-reportIncompatibleVariableOverride = "warning"
+[tool.ruff]
+line-length = 99
+lint.ignore = ["E203"]
+lint.extend-select = ["E501", "I001", "W291", "W292", "W293"]
+exclude = ["./admin_panel/bd_models/migrations/*.py"]
+
+[tool.ruff.format]
+exclude = ["./admin_panel/bd_models/migrations/*.py"]

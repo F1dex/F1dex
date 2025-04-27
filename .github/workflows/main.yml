@@ -1,0 +1,29 @@
+name: Checks
+on: [push]
+
+jobs:
+  ruff-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Run Ruff Linting
+        run: ruff check .
+
+  ruff-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Run Ruff Formatting Check
+        run: ruff format --check .
