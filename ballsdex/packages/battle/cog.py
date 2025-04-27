@@ -208,7 +208,9 @@ class Battle(commands.GroupCog):
             return
 
         battler.proposal.append(countryball)
-        await interaction.followup.send(f"{settings.collectible_name} added.", ephemeral=True)
+        await interaction.followup.send(
+            f"{settings.collectible_name.title()} added.", ephemeral=True
+        )
 
     @app_commands.command(extras={"battle": BattleCommandType.REMOVE})
     async def remove(self, interaction: discord.Interaction, countryball: BallInstanceTransform):
@@ -218,7 +220,7 @@ class Battle(commands.GroupCog):
         Parameters
         ----------
         countryball: BallInstance
-            The countryball you want to remove from your proposal
+            The countryball you want to remove from your deck
         """
         if not countryball:
             return

@@ -45,18 +45,26 @@ class BattleView(View):
         battler = self.battle._get_battler(interaction.user)
         if battler.locked:
             await interaction.response.send_message(
-                "You have already locked your proposal!", ephemeral=True
+                "You have already locked your deck!", ephemeral=True
             )
             return
+        if len(battler.proposal) == 0:
+            await interaction.response.send_message(
+                f"You need to add at least one {settings.collectible_name} "
+                "to your deck before locking it.",
+                ephemeral=True,
+            )
+            return
+
         await self.battle.lock(battler)
         if self.battle.battler1.locked and self.battle.battler2.locked:
             await interaction.response.send_message(
-                "Your proposal has been locked. Now confirm again to end the battle.",
+                "Your deck has been locked. Now confirm again to end the battle.",
                 ephemeral=True,
             )
         else:
             await interaction.response.send_message(
-                "Your proposal has been locked. "
+                "Your deck has been locked. "
                 "You can wait for the other user to lock their proposal.",
                 ephemeral=True,
             )
@@ -66,7 +74,7 @@ class BattleView(View):
         battler = self.battle._get_battler(interaction.user)
         if battler.locked:
             await interaction.response.send_message(
-                "You have locked your proposal, it cannot be edited! "
+                "You have locked your deck, it cannot be edited! "
                 "You can click the cancel button to stop the battle instead.",
                 ephemeral=True,
             )
@@ -74,7 +82,7 @@ class BattleView(View):
             for carfigure in battler.proposal:
                 await carfigure.unlock()
             battler.proposal.clear()
-            await interaction.response.send_message("Proposal cleared.", ephemeral=True)
+            await interaction.response.send_message("Deck cleared.", ephemeral=True)
 
     @button(
         label="Cancel the battle",
@@ -171,9 +179,9 @@ class BattleMenu:
         self.embed.title = "**Battling**"
         self.embed.color = discord.Colour.blurple()
         self.embed.description = (
-            f"Add or remove {settings.collectible_name}s you want to propose to the other player "
+            f"Add or remove {settings.collectible_name}s from your deck "
             f"using the {add_command} and {remove_command} commands.\n"
-            "Once you're finished, click the lock button below to confirm your proposal.\n"
+            "Once you're finished, click the lock button below to confirm your deck.\n"
             f"Add at least one {settings.collectible_name}.\n\n"
             f"*This battle expires {timestamp}.*"
         )
@@ -254,7 +262,7 @@ class BattleMenu:
 
             self.embed.colour = discord.Colour.yellow()
             self.embed.description = (
-                "Both users locked their propositions! Now confirm to conclude this battle."
+                "Both users locked their decks! Now confirm to conclude this battle."
             )
             self.current_view = ConfirmView(self)
             await self.message.edit(content=None, embed=self.embed, view=self.current_view)
@@ -269,8 +277,8 @@ class BattleMenu:
 
     async def confirm(self, battler: BattlingUser, interaction: discord.Interaction) -> bool:
         """
-        Mark a user's proposal as accepted. If both user accept, end the battle now
-        If the battle is concluded, return True, otherwise if an error occurs, return False
+        Mark a user's deck as accepted. If both users accept, end the battle now.
+        If the battle is concluded, return True, otherwise if an error occurs, return False.
         """
         # Initialize the variables
         attack1, health1 = 0, 0
@@ -314,7 +322,7 @@ class BattleMenu:
             if winner == "Draw":
                 self.embed.description = (
                     "This battle has ended in a draw, no "
-                    f"winner could be decided. Use stronger {settings.collectible_name}s "
+                    f"winner could be decided. Use stronger {settings.plural_collectible_name} "
                     "next time!"
                 )
             else:
