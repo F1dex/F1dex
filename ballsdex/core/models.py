@@ -577,3 +577,35 @@ class Block(models.Model):
 
     def __str__(self) -> str:
         return str(self.pk)
+
+
+class Battle(models.Model):
+    id: int
+    player1: fields.ForeignKeyRelation[Player] = fields.ForeignKeyField(
+        "models.Player", related_name="battles"
+    )
+    player2: fields.ForeignKeyRelation[Player] = fields.ForeignKeyField(
+        "models.Player", related_name="battles2"
+    )
+    date = fields.DatetimeField(auto_now_add=True)
+    battleobjects: fields.ReverseRelation[BattleObject]
+
+    def __str__(self) -> str:
+        return str(self.pk)
+
+
+class BattleObject(models.Model):
+    battle_id: int
+
+    battle: fields.ForeignKeyRelation[Battle] = fields.ForeignKeyField(
+        "models.Battle", related_name="battleobjects"
+    )
+    ballinstance: fields.ForeignKeyRelation[BallInstance] = fields.ForeignKeyField(
+        "models.BallInstance", related_name="battleobjects"
+    )
+    player: fields.ForeignKeyRelation[Player] = fields.ForeignKeyField(
+        "models.Player", related_name="battleobjects"
+    )
+
+    def __str__(self) -> str:
+        return str(self.pk)

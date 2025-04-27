@@ -49,6 +49,16 @@ class TradeCommandType(Enum):
     REMOVE = 1
 
 
+class BattleCommandType(Enum):
+    """
+    If a command is using `BallInstanceTransformer` for battling purposes, it should define this
+    enum to filter out values.
+    """
+
+    PICK = 0
+    REMOVE = 1
+
+
 class ValidationError(Exception):
     """
     Raised when an autocomplete result is forbidden and should raise a user message.

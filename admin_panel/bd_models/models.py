@@ -415,3 +415,31 @@ class Block(models.Model):
     class Meta:
         managed = True
         db_table = "block"
+
+
+class Battle(models.Model):
+    date = models.DateTimeField(auto_now_add=True, editable=False)
+    player1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="battles")
+    player2 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="battles2")
+
+    def __str__(self) -> str:
+        return f"Battle #{self.pk:0X}"
+
+    class Meta:
+        managed = True
+        db_table = "battle"
+
+
+class BattleObject(models.Model):
+    battle = models.ForeignKey(Battle, on_delete=models.CASCADE, related_name="battleobjects")
+    ballinstance = models.ForeignKey(
+        BallInstance, on_delete=models.CASCADE, related_name="battleobjects"
+    )
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="battleobjects")
+
+    def __str__(self) -> str:
+        return f"BattleObject #{self.pk:0X}"
+
+    class Meta:
+        managed = True
+        db_table = "battleobject"
