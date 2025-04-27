@@ -446,6 +446,9 @@ class Player(models.Model):
     )
     extra_data = fields.JSONField(default=dict)
     balls: fields.BackwardFKRelation[BallInstance]
+    accepted_tos = fields.BooleanField(
+        description="Whether you've accepted the TOS or not", default=False
+    )
 
     def __str__(self) -> str:
         return str(self.discord_id)
