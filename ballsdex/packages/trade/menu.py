@@ -240,7 +240,7 @@ class TradeMenu:
         remove_command = self.cog.remove.extras.get("mention", "`/trade remove`")
         view_command = self.cog.view.extras.get("mention", "`/trade view`")
 
-        self.embed.title = f"{settings.plural_collectible_name.title()} trading"
+        self.embed.title = f"{settings.collectible_name.title()} trading"
         self.embed.color = discord.Colour.blurple()
         self.embed.description = (
             f"Add or remove {settings.plural_collectible_name} you want to propose "
@@ -353,6 +353,7 @@ class TradeMenu:
 
     async def perform_trade(self):
         trade = await Trade.create(player1=self.trader1.player, player2=self.trader2.player)
+        await self.unlock_balls()
 
         for countryball in self.trader1.proposal:
             countryball.player = self.trader2.player
@@ -369,8 +370,6 @@ class TradeMenu:
             await TradeObject.create(
                 trade=trade, ballinstance=countryball, player=self.trader2.player
             )
-
-        await self.unlock_balls()
 
     async def unlock_balls(self):
         """
