@@ -359,6 +359,7 @@ class TradeMenu:
             countryball.player = self.trader2.player
             countryball.trade_player = self.trader1.player
             countryball.favorite = False
+            await countryball.save()
             await TradeObject.create(
                 trade=trade, ballinstance=countryball, player=self.trader1.player
             )
@@ -367,6 +368,7 @@ class TradeMenu:
             countryball.player = self.trader1.player
             countryball.trade_player = self.trader2.player
             countryball.favorite = False
+            await countryball.save()
             await TradeObject.create(
                 trade=trade, ballinstance=countryball, player=self.trader2.player
             )

@@ -119,7 +119,10 @@ class CommandTree(app_commands.CommandTree):
                     ephemeral=True,
                 )
             return False  # wait for all shards to be connected
-        return await bot.blacklist_check(interaction)
+
+        if not await bot.blacklist_check(interaction):
+            return False
+        return await bot.accept_tos(interaction)
 
 
 class BallsDexBot(commands.AutoShardedBot):
@@ -397,8 +400,6 @@ class BallsDexBot(commands.AutoShardedBot):
             player, _ = await Player.get_or_create(discord_id=interaction.user.id)
             if player.accepted_tos:
                 return True
-            else:
-                pass
 
             if not interaction.response.is_done():
                 await interaction.response.defer(thinking=True, ephemeral=True)

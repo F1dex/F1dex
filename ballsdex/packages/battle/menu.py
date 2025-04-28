@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, cast
 import discord
 from discord.ui import Button, View, button
 
+from ballsdex.core.models import BallInstance, Special
 from ballsdex.packages.battle.battle_user import BattlingUser
 from ballsdex.packages.battle.display import fill_battle_embed_fields
 from ballsdex.settings import settings
@@ -280,21 +281,44 @@ class BattleMenu:
         Mark a user's deck as accepted. If both users accept, end the battle now.
         If the battle is concluded, return True, otherwise if an error occurs, return False.
         """
-        # Initialize the variables
         attack1, health1 = 0, 0
         attack2, health2 = 0, 0
 
+        SPECIAL_BUFFS = [
+            (0.08, [1, 2, 5, 6, 7, 9, 13, 14, 15, 17, 21]),
+            (0.10, [16]),
+            (0.18, [18]),
+            (0.25, [22]),
+            (0.30, [10, 11]),
+            (0.35, [19]),
+            (0.80, [12]),
+            (1.00, [20]),
+            (2.00, [4]),
+        ]
+
+        async def apply_special_buff(countryball: BallInstance):
+            cattack = countryball.attack
+            chealth = countryball.health
+
+            if countryball.special:
+                special = await Special.get(name=countryball.special.name)
+                for buff_percent, id_list in SPECIAL_BUFFS:
+                    if special.pk in id_list:
+                        cattack = int(cattack * (1 + buff_percent))
+                        chealth = int(chealth * (1 + buff_percent))
+                        break
+
+            return cattack, chealth
+
         for countryball in self.battler1.proposal:
-            cattack1 = countryball.attack
-            attack1 += cattack1
-            chealth1 = countryball.health
-            health1 += chealth1
+            cattack, chealth = await apply_special_buff(countryball)
+            attack1 += cattack
+            health1 += chealth
 
         for countryball in self.battler2.proposal:
-            cattack2 = countryball.attack
-            attack2 += cattack2
-            chealth2 = countryball.health
-            health2 += chealth2
+            cattack, chealth = await apply_special_buff(countryball)
+            attack2 += cattack
+            health2 += chealth
 
         worl1 = attack1 / health2
         worl2 = attack2 / health1
