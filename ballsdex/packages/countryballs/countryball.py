@@ -162,7 +162,7 @@ class BallSpawnView(View):
         if self.caught:
             await interaction.response.send_message("I was caught already!", ephemeral=True)
         else:
-            await interaction.response.send_modal(CountryballNamePrompt(self))
+            await interaction.response.send_modal(CountryballNamePrompt(self, self.model))
 
     @classmethod
     async def from_existing(cls, bot: "BallsDexBot", ball_instance: BallInstance):
