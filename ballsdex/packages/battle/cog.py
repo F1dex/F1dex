@@ -248,3 +248,18 @@ class Battle(commands.GroupCog):
             f"{settings.collectible_name} removed.", ephemeral=True
         )
         await countryball.unlock()
+
+    @app_commands.command()
+    async def cancel(self, interaction: discord.Interaction):
+        """
+        Cancel the ongoing battle.
+        """
+        battle, battler = self.get_battle(interaction)
+        if not battle or not battler:
+            await interaction.response.send_message(
+                "You do not have an ongoing battle.", ephemeral=True
+            )
+            return
+
+        await battle.user_cancel(battler)
+        await interaction.response.send_message("Battle cancelled.", ephemeral=True)
