@@ -364,9 +364,9 @@ class BattleMenu:
             await self.battler2.player.add_coins(10)
         elif winner is None:
             if self.battler1.player.battles_today < settings.max_profitable_battles_per_day:
-                await self.battler1.player.add_coins(10)
+                await self.battler1.player.add_coins(5)
             if self.battler2.player.battles_today < settings.max_profitable_battles_per_day:
-                await self.battler2.player.add_coins(10)
+                await self.battler2.player.add_coins(5)
 
         battler.accepted = True
         fill_battle_embed_fields(self.embed, self.bot, self.battler1, self.battler2)

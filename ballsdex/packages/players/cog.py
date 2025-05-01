@@ -560,6 +560,49 @@ class Player(commands.GroupCog):
         await pages.start(ephemeral=True)
 
     @app_commands.command()
+    @app_commands.checks.cooldown(1, 60, key=lambda i: i.user.id)
+    async def leaderboard(self, interaction: discord.Interaction["BallsDexBot"]):
+        """
+        Show the players with the most coins in the dex.
+        """
+        players = await PlayerModel.all().order_by("-coins")[:10]
+
+        if not players:
+            await interaction.followup.send("No players found in the database.", ephemeral=True)
+            return
+
+        await interaction.response.defer(thinking=True)
+
+        embed = discord.Embed(
+            title=f"**Top 10 players with the most {settings.plural_currency_name}**",
+            color=discord.Color.gold(),
+        )
+
+        for i, player in enumerate(players, start=1):
+            try:
+                user = await interaction.client.fetch_user(player.discord_id)
+            except discord.NotFound:
+                user = None
+
+            if user:
+                username = user.name
+            else:
+                username = f"Unknown User ({player.discord_id})"
+
+            grammar = (
+                f"{settings.currency_name}"
+                if player.coins == 1
+                else f"{settings.plural_currency_name}"
+            )
+            embed.add_field(
+                name=f"{i}. {username}",
+                value=f"{player.coins} {grammar} {settings.currency_emoji}",
+                inline=False,
+            )
+
+        await interaction.followup.send(embed=embed)
+
+    @app_commands.command()
     async def info(self, interaction: discord.Interaction["BallsDexBot"]):
         """
         Display some of your info in the bot!
