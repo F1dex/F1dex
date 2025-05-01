@@ -9,7 +9,13 @@ import discord
 from discord.ui import Button, View, button
 from discord.utils import format_dt, utcnow
 
-from ballsdex.core.models import BallInstance, Player, Trade, TradeCooldownPolicy, TradeObject
+from ballsdex.core.models import (
+    BallInstance,
+    Player,
+    Trade,
+    TradeCooldownPolicy,
+    TradeObject,
+)
 from ballsdex.core.utils import menus
 from ballsdex.core.utils.buttons import ConfirmChoiceView
 from ballsdex.core.utils.paginator import Pages
@@ -57,8 +63,19 @@ class TradeView(View):
                 "You have already locked your proposal!", ephemeral=True
             )
             return
+
+        player, _ = await Player.get_or_create(discord_id=interaction.user.id)
+        if player.coins < trader.coins:
+            await interaction.response.send_message(
+                "The amount of coins in your proposal is more than the coins "
+                "you have in your balance.",
+                ephemeral=True,
+            )
+            return
+
         await interaction.response.defer(thinking=True, ephemeral=True)
         await self.trade.lock(trader)
+
         if self.trade.trader1.locked and self.trade.trader2.locked:
             await interaction.followup.send(
                 "Your proposal has been locked. Now confirm again to end the trade.",
@@ -100,6 +117,11 @@ class TradeView(View):
             await countryball.unlock()
 
         trader.proposal.clear()
+
+        if trader.coins > 0:
+            await trader.player.add_coins(trader.coins)
+            trader.coins = 0
+
         await interaction.followup.send("Proposal cleared.", ephemeral=True)
 
     @button(
@@ -167,6 +189,10 @@ class ConfirmView(View):
                 )
                 return
 
+        player, _ = await Player.get_or_create(discord_id=interaction.user.id)
+        if player.coins < trader.coins:
+            raise InvalidTradeOperation()
+
         if trader.accepted:
             await interaction.response.send_message(
                 "You have already accepted this trade.", ephemeral=True
@@ -223,6 +249,8 @@ class TradeMenu:
         self.trader1 = trader1
         self.trader2 = trader2
         self.embed = discord.Embed()
+        self.initial_coins_trader1 = trader1.coins
+        self.initial_coins_trader2 = trader2.coins
         self.task: asyncio.Task | None = None
         self.current_view: TradeView | ConfirmView = TradeView(self)
         self.message: discord.Message
@@ -239,6 +267,8 @@ class TradeMenu:
         add_command = self.cog.add.extras.get("mention", "`/trade add`")
         remove_command = self.cog.remove.extras.get("mention", "`/trade remove`")
         view_command = self.cog.view.extras.get("mention", "`/trade view`")
+        add_coins_command = self.cog.coins_add.extras.get("mention", "`/trade coins_add`")
+        remove_coins_command = self.cog.coins_remove.extras.get("mention", "`/trade coins_remove`")
 
         self.embed.title = f"{settings.collectible_name.title()} trading"
         self.embed.color = discord.Colour.blurple()
@@ -247,6 +277,8 @@ class TradeMenu:
             f"to the other player using the {add_command} and {remove_command} commands.\n"
             "Once you're finished, click the lock button below to confirm your proposal.\n"
             "You can also lock with nothing if you're receiving a gift.\n\n"
+            "You can add or remove coins using the "
+            f"{add_coins_command} and {remove_coins_command} commands.\n"
             "*This trade will timeout "
             f"{format_dt(utcnow() + timedelta(minutes=30), style='R')}.*\n\n"
             f"Use the {view_command} command to see the full"
@@ -259,7 +291,7 @@ class TradeMenu:
 
     async def update_message_loop(self):
         """
-        A loop task that updates each 5 second the menu with the new content.
+        A loop task that updates each 5 seconds the menu with the new content.
         """
 
         assert self.task
@@ -303,7 +335,7 @@ class TradeMenu:
     async def cancel(
         self,
         reason: str = "The trade has been cancelled.",
-        colour: discord.Colour = discord.Colour.blurple(),
+        colour: discord.Colour = discord.Colour.red(),
     ):
         """
         Cancel the trade immediately.
@@ -313,6 +345,9 @@ class TradeMenu:
 
         for countryball in self.trader1.proposal + self.trader2.proposal:
             await countryball.unlock()
+
+        await self.trader1.player.add_coins(self.trader1.coins)
+        await self.trader2.player.add_coins(self.trader2.coins)
 
         self.current_view.stop()
         for item in self.current_view.children:
@@ -373,6 +408,20 @@ class TradeMenu:
                 trade=trade, ballinstance=countryball, player=self.trader2.player
             )
 
+        if (
+            self.trader1.player.coins < self.trader1.coins
+            or self.trader2.player.coins < self.trader2.coins
+        ):
+            raise InvalidTradeOperation()
+
+        await self.trader1.player.add_coins(self.trader2.coins)
+        await self.trader1.player.remove_coins(self.trader1.coins)
+        await self.trader2.player.add_coins(self.trader1.coins)
+        await self.trader2.player.remove_coins(self.trader2.coins)
+
+        await self.trader1.player.add_coins(5)
+        await self.trader2.player.add_coins(5)
+
     async def unlock_balls(self):
         """
         This function unlocks collectibles that were locked during the trade.
@@ -422,6 +471,7 @@ class TradeMenu:
                 log.warning(f"Illegal trade operation between {self.trader1=} and {self.trader2=}")
                 self.embed.description = (
                     f":warning: An attempt to modify the {settings.plural_collectible_name} "
+                    f"or {settings.plural_currency_name} "
                     "during the trade was detected and the trade was cancelled."
                 )
                 self.embed.colour = discord.Colour.red()

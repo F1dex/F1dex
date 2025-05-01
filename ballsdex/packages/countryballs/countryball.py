@@ -32,6 +32,17 @@ if TYPE_CHECKING:
 log = logging.getLogger("ballsdex.packages.countryballs")
 
 
+def amount_from_rarity(rarity: float) -> int:
+    rarity_min = 0.03
+    rarity_max = 0.80
+    amount_min = 10
+    amount_max = 300
+
+    k = math.log(amount_max / amount_min) / (rarity_min - rarity_max)
+    amount = amount_min * math.exp(k * (rarity - rarity_max))
+    return int(round(amount))
+
+
 class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name}!"):
     name = TextInput(
         label=f"Name of this {settings.collectible_name}",
@@ -39,9 +50,10 @@ class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name
         placeholder="Your guess",
     )
 
-    def __init__(self, view: BallSpawnView):
+    def __init__(self, view: BallSpawnView, ball: Ball):
         super().__init__()
         self.view = view
+        self.ball = ball
 
     async def on_error(
         self,
@@ -60,9 +72,9 @@ class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name
             )
 
     async def on_submit(self, interaction: discord.Interaction["BallsDexBot"]):
-        await interaction.response.defer(thinking=True)
-
+        await interaction.response.defer(thinking=True, ephemeral=True)
         player, _ = await Player.get_or_create(discord_id=interaction.user.id)
+
         if self.view.caught:
             await interaction.followup.send(
                 f"{interaction.user.mention} I was caught already!",
@@ -81,11 +93,12 @@ class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name
                 allowed_mentions=discord.AllowedMentions(users=player.can_be_mentioned),
             )
             await interaction.followup.edit_message(self.view.message.id, view=self.view)
+            await player.add_coins(amount_from_rarity(self.ball.rarity))
         else:
             await interaction.followup.send(
                 f"{interaction.user.mention} Wrong name!",
                 allowed_mentions=discord.AllowedMentions(users=player.can_be_mentioned),
-                ephemeral=False,
+                ephemeral=True,
             )
 
 

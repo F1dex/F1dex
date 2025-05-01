@@ -92,6 +92,7 @@ class Player(models.Model):
     accepted_tos = models.BooleanField(
         help_text="Whether you've accepted the TOS or not", default=False
     )
+    coins = models.BigIntegerField(help_text="Amount of coins you have", default=0)
 
     def is_blacklisted(self) -> bool:
         blacklist = cast(
@@ -103,6 +104,16 @@ class Player(models.Model):
             ),
         )
         return self.discord_id in blacklist
+
+    def add_coins(self, amount: int):
+        self.coins += amount
+        self.save(update_fields=["coins"])
+
+    def remove_coins(self, amount: int):
+        if self.coins < amount:
+            raise ValueError("Not enough coins")
+        self.coins -= amount
+        self.save(update_fields=["coins"])
 
     def __str__(self) -> str:
         return (

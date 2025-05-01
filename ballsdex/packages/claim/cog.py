@@ -72,7 +72,6 @@ class Claim(commands.GroupCog):
                         except discord.Forbidden:
                             pass
 
-
     @collector.command(name="bronze")
     async def collector_bronze(
         self, interaction: discord.Interaction, countryball: BallEnabledTransform
