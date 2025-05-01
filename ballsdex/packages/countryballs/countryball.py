@@ -72,7 +72,7 @@ class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name
             )
 
     async def on_submit(self, interaction: discord.Interaction["BallsDexBot"]):
-        await interaction.response.defer(thinking=True, ephemeral=True)
+        await interaction.response.defer(thinking=True)
         player, _ = await Player.get_or_create(discord_id=interaction.user.id)
 
         if self.view.caught:
