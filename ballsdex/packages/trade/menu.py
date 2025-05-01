@@ -335,7 +335,7 @@ class TradeMenu:
     async def cancel(
         self,
         reason: str = "The trade has been cancelled.",
-        colour: discord.Colour = discord.Colour.blurple(),
+        colour: discord.Colour = discord.Colour.red(),
     ):
         """
         Cancel the trade immediately.
@@ -346,8 +346,8 @@ class TradeMenu:
         for countryball in self.trader1.proposal + self.trader2.proposal:
             await countryball.unlock()
 
-        self.trader1.player.add_coins(self.trader1.coins)
-        self.trader2.player.add_coins(self.trader2.coins)
+        await self.trader1.player.add_coins(self.trader1.coins)
+        await self.trader2.player.add_coins(self.trader2.coins)
 
         self.current_view.stop()
         for item in self.current_view.children:

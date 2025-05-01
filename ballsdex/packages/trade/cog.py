@@ -477,6 +477,7 @@ class Trade(commands.GroupCog):
             return
 
         player, _ = await Player.get_or_create(discord_id=interaction.user.id)
+        plural = f"{settings.currency_name}" if amount == 1 else settings.plural_currency_name
 
         if trade:
             if amount > player.coins:
@@ -488,7 +489,7 @@ class Trade(commands.GroupCog):
             else:
                 await trader.add_coins(amount)
                 await interaction.response.send_message(
-                    f"Added {amount} {settings.currency_name} to your proposal.", ephemeral=True
+                    f"Added {amount} {plural} to your proposal.", ephemeral=True
                 )
         else:
             await interaction.response.send_message(

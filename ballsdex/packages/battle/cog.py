@@ -118,7 +118,7 @@ class Battle(commands.GroupCog):
             )
             return
 
-        if max_countryballs > 50:
+        if max_countryballs is not None and max_countryballs > 50:
             await interaction.response.send_message(
                 f"You cannot battle with more than 50 {settings.plural_collectible_name}.",
                 ephemeral=True,
