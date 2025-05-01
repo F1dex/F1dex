@@ -163,22 +163,22 @@ def fill_trade_embed_fields(
 
     i = 1
     while i < len(trader1_proposal) or i < len(trader2_proposal):
-        embed.add_field(name="\u200B", value="\u200B", inline=True)
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         if i < len(trader1_proposal):
-            embed.add_field(name="\u200B", value=trader1_proposal[i], inline=True)
+            embed.add_field(name="\u200b", value=trader1_proposal[i], inline=True)
         else:
-            embed.add_field(name="\u200B", value="\u200B", inline=True)
+            embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         if i < len(trader2_proposal):
-            embed.add_field(name="\u200B", value=trader2_proposal[i], inline=True)
+            embed.add_field(name="\u200b", value=trader2_proposal[i], inline=True)
         else:
-            embed.add_field(name="\u200B", value="\u200B", inline=True)
+            embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         i += 1
 
     if i > 1:
-        embed.add_field(name="\u200B", value="\u200B", inline=True)
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
 
     if len(embed) > 6000:
         embed.clear_fields()
