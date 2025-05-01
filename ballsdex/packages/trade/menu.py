@@ -414,10 +414,13 @@ class TradeMenu:
         ):
             raise InvalidTradeOperation()
 
-        self.trader1.player.add_coins(self.trader2.coins)
-        self.trader1.player.remove_coins(self.trader1.coins)
-        self.trader2.player.add_coins(self.trader1.coins)
-        self.trader2.player.remove_coins(self.trader2.coins)
+        await self.trader1.player.add_coins(self.trader2.coins)
+        await self.trader1.player.remove_coins(self.trader1.coins)
+        await self.trader2.player.add_coins(self.trader1.coins)
+        await self.trader2.player.remove_coins(self.trader2.coins)
+
+        await self.trader1.player.add_coins(5)
+        await self.trader2.player.add_coins(5)
 
     async def unlock_balls(self):
         """
