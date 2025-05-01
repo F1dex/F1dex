@@ -12,7 +12,7 @@ class Coins(app_commands.Group):
     Coin management
     """
 
-    @app_commands.command()
+    @app_commands.command(name="add")
     @app_commands.checks.has_any_role(*settings.root_role_ids)
     async def coins_add(
         self,
@@ -56,7 +56,7 @@ class Coins(app_commands.Group):
             interaction.client,
         )
 
-    @app_commands.command()
+    @app_commands.command(name="remove")
     @app_commands.checks.has_any_role(*settings.root_role_ids)
     async def coins_remove(
         self,

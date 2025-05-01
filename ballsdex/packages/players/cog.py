@@ -636,7 +636,7 @@ class Player(commands.GroupCog):
         embed.set_thumbnail(url=user.display_avatar)  # type: ignore
         await interaction.followup.send(embed=embed, ephemeral=True)
 
-    @app_commands.command()
+    @coins.command(name="give")
     async def coins_give(
         self,
         interaction: discord.Interaction,
