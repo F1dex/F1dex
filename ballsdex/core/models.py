@@ -460,6 +460,8 @@ class Player(models.Model):
         description="Whether you've accepted the TOS or not", default=False
     )
     coins = fields.BigIntField(default=0)
+    trades_today = fields.IntField(description="Number of trades done today", default=0)
+    battles_today = fields.IntField(description="Number of battles done today", default=0)
 
     def __str__(self) -> str:
         return str(self.discord_id)

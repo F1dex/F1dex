@@ -1,9 +1,11 @@
+import asyncio
 from collections import defaultdict
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, cast
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.utils import MISSING
 
 from ballsdex.core.models import Player
@@ -18,6 +20,12 @@ from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
+
+
+def seconds_until_midnight_utc():
+    now = datetime.utcnow()
+    next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    return (next_midnight - now).total_seconds()
 
 
 class Battle(commands.GroupCog):
@@ -279,3 +287,20 @@ class Battle(commands.GroupCog):
 
         await battle.user_cancel(battler)
         await interaction.response.send_message("Battle cancelled.", ephemeral=True)
+
+
+class BattleResetCog(commands.Cog):
+    def __init__(self, bot: "BallsDexBot"):
+        self.bot = bot
+        self.reset_battles_at_midnight.start()
+
+    @tasks.loop(hours=24)
+    async def reset_battles_at_midnight(self):
+        await Player.all().update(trades_today=0)
+
+    @reset_battles_at_midnight.before_loop
+    async def before_reset(self):
+        await self.bot.wait_until_ready()
+        sleep_seconds = seconds_until_midnight_utc()
+        print(f"Sleeping {sleep_seconds:.0f} seconds until midnight UTC trade reset.")
+        await asyncio.sleep(sleep_seconds)

@@ -419,8 +419,15 @@ class TradeMenu:
         await self.trader2.player.add_coins(self.trader1.coins)
         await self.trader2.player.remove_coins(self.trader2.coins)
 
-        await self.trader1.player.add_coins(5)
-        await self.trader2.player.add_coins(5)
+        if self.trader1.player.trades_today < settings.max_profitable_trades_per_day:
+            await self.trader1.player.add_coins(5)
+        if self.trader2.player.trades_today < settings.max_profitable_trades_per_day:
+            await self.trader2.player.add_coins(5)
+
+        self.trader1.player.trades_today += 1
+        self.trader2.player.trades_today += 1
+        await self.trader1.player.save()
+        await self.trader2.player.save()
 
     async def unlock_balls(self):
         """

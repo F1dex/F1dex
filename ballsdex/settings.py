@@ -48,6 +48,10 @@ class Settings:
         Set the biggest/smallest attack bonus that a spawned countryball can have.
     max_health_bonus:
         Set the biggest/smallest health bonus that a spawned countryball can have.
+    max_profitable_trades_per_day: int
+        Set the maximum amount of trades that give coins to a userper day, 20 by default.
+    max_profitable_battles_per_day: int
+        Set the maximum amount of battles that give coins to a user per day, 20 by default.
     about_description: str
         Used in the /about command
     github_link: str
@@ -93,6 +97,8 @@ class Settings:
     max_favorites: int = 50
     max_attack_bonus: int = 20
     max_health_bonus: int = 20
+    max_profitable_trades_per_day: int = 20
+    max_profitable_battles_per_day: int = 20
 
     # /about
     about_description: str = ""
@@ -174,6 +180,8 @@ def read_settings(path: "Path"):
     settings.max_favorites = content.get("max-favorites", 50)
     settings.max_attack_bonus = content.get("max-attack-bonus", 20)
     settings.max_health_bonus = content.get("max-health-bonus", 20)
+    settings.max_profitable_trades_per_day = content.get("max-profitable-trades-per-day", 20)
+    settings.max_profitable_battles_per_day = content.get("max-profitable-battles-per-day", 20)
 
     settings.packages = content.get("packages") or [
         "ballsdex.packages.admin",
@@ -267,6 +275,12 @@ max-attack-bonus: 20
 # the highest/lowest possible health bonus, do not leave empty
 # this cannot be smaller than 0, enter a positive number
 max-health-bonus: 20
+
+# the maximum amount of trades that give coins to a user per day
+max-profitable-trades-per-day: 20
+
+# the maximum amount of battles that give coins to a user per day
+max-profitable-battles-per-day: 20
 
 # enables the /admin command
 admin-command:

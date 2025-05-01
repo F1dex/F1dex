@@ -352,15 +352,21 @@ class BattleMenu:
                 await self.battler1.player.add_coins(self.wage)
                 await self.battler2.player.add_coins(self.wage)
 
-        if winner == self.battler1:
-            await self.battler1.player.add_coins(15)
-            await self.battler2.player.add_coins(3)
-        elif winner == self.battler2:
-            await self.battler2.player.add_coins(15)
-            await self.battler1.player.add_coins(3)
-        elif winner is None:
+        if (
+            winner == self.battler1
+            and self.battler1.player.battles_today < settings.max_profitable_battles_per_day
+        ):
             await self.battler1.player.add_coins(10)
+        elif (
+            winner == self.battler2
+            and self.battler2.player.battles_today < settings.max_profitable_battles_per_day
+        ):
             await self.battler2.player.add_coins(10)
+        elif winner is None:
+            if self.battler1.player.battles_today < settings.max_profitable_battles_per_day:
+                await self.battler1.player.add_coins(10)
+            if self.battler2.player.battles_today < settings.max_profitable_battles_per_day:
+                await self.battler2.player.add_coins(10)
 
         battler.accepted = True
         fill_battle_embed_fields(self.embed, self.bot, self.battler1, self.battler2)
@@ -385,4 +391,10 @@ class BattleMenu:
                 item.disabled = True  # type: ignore
 
         await self.message.edit(content=None, embed=self.embed, view=self.current_view)
+
+        self.battler1.player.battles_today += 1
+        self.battler2.player.battles_today += 1
+        await self.battler1.player.save()
+        await self.battler2.player.save()
+
         return True

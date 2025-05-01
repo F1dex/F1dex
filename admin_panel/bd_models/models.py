@@ -93,6 +93,8 @@ class Player(models.Model):
         help_text="Whether you've accepted the TOS or not", default=False
     )
     coins = models.BigIntegerField(help_text="Amount of coins you have", default=0)
+    trades_today = models.IntegerField(help_text="Number of trades done today", default=0)
+    battles_today = models.IntegerField(help_text="Number of battles done today", default=0)
 
     def is_blacklisted(self) -> bool:
         blacklist = cast(
