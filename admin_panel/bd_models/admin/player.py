@@ -54,7 +54,7 @@ class PlayerAdmin(admin.ModelAdmin):
     save_on_top = True
     inlines = (BlacklistTabular, BallInstanceTabular)
 
-    list_display = ("discord_id", "pk", "blacklisted")
+    list_display = ("discord_id", "pk", "coins", "blacklisted")
     list_filter = (BlacklistedListFilter,)
     show_facets = admin.ShowFacets.NEVER  # type: ignore
 

@@ -40,6 +40,9 @@ class Trade(commands.GroupCog):
         self.trades: TTLCache[int, dict[int, list[TradeMenu]]] = TTLCache(maxsize=999999, ttl=1800)
 
     bulk = app_commands.Group(name="bulk", description="Bulk Commands")
+    coins = app_commands.Group(
+        name=settings.plural_currency_name, description="Trade with other players using coins"
+    )
 
     def get_trade(
         self,
@@ -445,3 +448,92 @@ class Trade(commands.GroupCog):
 
         source = TradeViewMenu(interaction, [trade.trader1, trade.trader2], self)
         await source.start(content="Select a user to view their proposal.")
+
+    @coins.command(name="add")
+    async def coins_add(self, interaction: discord.Interaction, amount: int):
+        """
+        Add coins to your trade proposal.
+        """
+        trade, trader = self.get_trade(interaction)
+
+        if trader is None:
+            await interaction.response.send_message(
+                "Unable to find an ongoing trade.", ephemeral=True
+            )
+            return
+
+        if trader.locked:
+            await interaction.response.send_message(
+                "You have locked your proposal, it cannot be edited! "
+                "You can click the cancel button to stop the trade instead.",
+                ephemeral=True,
+            )
+            return
+
+        if amount <= 0:
+            await interaction.response.send_message(
+                "The amount to add must be positive.", ephemeral=True
+            )
+            return
+
+        player, _ = await Player.get_or_create(discord_id=interaction.user.id)
+
+        if trade:
+            if amount > player.coins:
+                await interaction.response.send_message(
+                    f"You don't have enough {settings.currency_name} to add that amount.",
+                    ephemeral=True,
+                )
+                return
+            else:
+                await trader.add_coins(amount)
+                await interaction.response.send_message(
+                    f"Added {amount} {settings.currency_name} to your proposal.", ephemeral=True
+                )
+        else:
+            await interaction.response.send_message(
+                "Unable to find ongoing trade.", ephemeral=True
+            )
+
+    @coins.command(name="remove")
+    async def coins_remove(self, interaction: discord.Interaction, amount: int):
+        """
+        Remove coins from your trade proposal.
+        """
+        trade, trader = self.get_trade(interaction)
+
+        if trader is None:
+            await interaction.response.send_message(
+                "Unable to find an ongoing trade.", ephemeral=True
+            )
+            return
+
+        if trader.locked:
+            await interaction.response.send_message(
+                "You have locked your proposal, it cannot be edited! "
+                "You can click the cancel button to stop the trade instead.",
+                ephemeral=True,
+            )
+            return
+
+        if amount <= 0:
+            await interaction.response.send_message(
+                "The amount to remove must be positive.", ephemeral=True
+            )
+            return
+
+        if trade and trader:
+            if amount > trader.coins:
+                await interaction.response.send_message(
+                    f"You can't remove more {settings.plural_currency_name} "
+                    "than the amount in your proposal.",
+                    ephemeral=True,
+                )
+                return
+
+            await trader.remove_coins(amount)
+            plural = f"{settings.currency_name}" if amount == 1 else settings.plural_currency_name
+
+            await interaction.response.send_message(
+                f"Removed {amount} {plural} from your proposal.", ephemeral=True
+            )

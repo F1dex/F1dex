@@ -94,7 +94,8 @@ class Battle(commands.GroupCog):
         self,
         interaction: discord.Interaction["BallsDexBot"],
         user: discord.User,
-        max_countryballs: int | None = 10,
+        max_countryballs: int | None = None,
+        wage: int | None = None,
     ):
         """
         Begin a battle with the chosen user.
@@ -105,6 +106,8 @@ class Battle(commands.GroupCog):
             The user you want to battle with.
         max_countryballs: int | None
             The maximum number of countryballs you can use in the battle, 10 if empty.
+        wage: int | None
+            The amount of coins that both users will give for the battle, winner gets all.
         """
         if user.bot:
             await interaction.response.send_message("You cannot battle with bots.", ephemeral=True)
@@ -122,6 +125,17 @@ class Battle(commands.GroupCog):
             )
             return
 
+        player1, _ = await Player.get_or_create(discord_id=interaction.user.id)
+        player2, _ = await Player.get_or_create(discord_id=user.id)
+
+        if wage is not None and (wage > player1.coins or wage > player2.coins):
+            await interaction.response.send_message(
+                "The wage amount cannot be more than your "
+                f"or the other user's amount of {settings.plural_currency_name}.",
+                ephemeral=True,
+            )
+            return
+
         battle1, battler1 = self.get_battle(interaction)
         battle2, battler2 = self.get_battle(channel=interaction.channel, user=user)  # type: ignore
         if battle1 or battler1:
@@ -135,20 +149,22 @@ class Battle(commands.GroupCog):
             )
             return
 
-        player1, _ = await Player.get_or_create(discord_id=interaction.user.id)
-        player2, _ = await Player.get_or_create(discord_id=user.id)
         if player2.discord_id in self.bot.blacklist:
             await interaction.response.send_message(
                 "You cannot battle with a blacklisted user.", ephemeral=True
             )
             return
 
+        max_drivers = 10 if max_countryballs is None else max_countryballs
+        wage_amount = 0 if wage is None else wage
+
         menu = BattleMenu(
             self,
             interaction,
             BattlingUser(interaction.user, player1),
             BattlingUser(user, player2),
-            max_drivers=max_countryballs or 10,
+            max_drivers=max_drivers,
+            wage=wage_amount,
         )
         self.battles[interaction.guild.id][interaction.channel.id].append(menu)  # type: ignore
         await menu.start()

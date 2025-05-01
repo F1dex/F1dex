@@ -6,6 +6,7 @@ from ballsdex.core.models import Trade as TradeModel
 from ballsdex.core.utils import menus
 from ballsdex.core.utils.paginator import Pages
 from ballsdex.packages.trade.trade_user import TradingUser
+from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
@@ -100,7 +101,6 @@ def fill_trade_embed_fields(
     trader1: TradingUser,
     trader2: TradingUser,
     compact: bool = False,
-    is_admin: bool = False,
 ):
     """
     Fill the fields of an embed with the items part of a trade.
@@ -128,15 +128,22 @@ def fill_trade_embed_fields(
     trader1_proposal = _build_list_of_strings(trader1, bot, compact)
     trader2_proposal = _build_list_of_strings(trader2, bot, compact)
 
+    trader1_plural = (
+        f"{settings.currency_name}" if trader1.coins == 1 else f"{settings.plural_currency_name}"
+    )
+    trader2_plural = (
+        f"{settings.currency_name}" if trader2.coins == 1 else f"{settings.plural_currency_name}"
+    )
+
     # then display the text. first page is easy
     embed.add_field(
-        name=_get_trader_name(trader1, is_admin),
-        value=trader1_proposal[0],
+        name=f"{_get_prefix_emote(trader1)} {trader1.user.name}\n",
+        value=(f"**{trader1_plural}**\n\n{trader1.proposal[0] if trader1.proposal else 'Empty'}"),
         inline=True,
     )
     embed.add_field(
-        name=_get_trader_name(trader2, is_admin),
-        value=trader2_proposal[0],
+        name=f"{_get_prefix_emote(trader2)} {trader2.user.name}\n",
+        value=(f"**{trader2_plural}**\n\n{trader2.proposal[0] if trader2.proposal else 'Empty'}"),
         inline=True,
     )
 
@@ -164,24 +171,16 @@ def fill_trade_embed_fields(
 
     if len(embed) > 6000:
         if not compact:
-            return fill_trade_embed_fields(
-                embed, bot, trader1, trader2, compact=True, is_admin=is_admin
-            )
+            return fill_trade_embed_fields(embed, bot, trader1, trader2, compact=True)
         else:
             embed.clear_fields()
             embed.add_field(
-                name=_get_trader_name(trader1, is_admin),
-                value=(
-                    f"Trade too long, only showing last page:\n{trader1_proposal[-1]}"
-                    f"\nTotal: {len(trader1.proposal)}"
-                ),
+                name=f"{_get_prefix_emote(trader1)} {trader1.user.name}",
+                value=f"Trade too long, only showing last page:\n{trader1_proposal[-1]}",
                 inline=True,
             )
             embed.add_field(
-                name=_get_trader_name(trader2, is_admin),
-                value=(
-                    f"Trade too long, only showing last page:\n{trader2_proposal[-1]}\n"
-                    f"Total: {len(trader2.proposal)}"
-                ),
+                name=f"{_get_prefix_emote(trader2)} {trader2.user.name}",
+                value=f"Trade too long, only showing last page:\n{trader2_proposal[-1]}",
                 inline=True,
             )

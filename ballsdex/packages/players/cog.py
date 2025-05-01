@@ -54,6 +54,23 @@ class Player(commands.GroupCog):
     friend = app_commands.Group(name="friend", description="Friend commands")
     blocked = app_commands.Group(name="block", description="Block commands")
     policy = app_commands.Group(name="policy", description="Policy commands")
+    coins = app_commands.Group(name="coins", description="Coin commands")
+
+    @app_commands.command()
+    async def balance(self, interaction: discord.Interaction):
+        """
+        Check your balance.
+        """
+        player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
+        plural = (
+            f"{settings.currency_name}"
+            if player.coins == 1
+            else f"{settings.plural_currency_name}"
+        )
+
+        await interaction.response.send_message(
+            f"You have {player.coins} {plural} {settings.currency_emoji}.", ephemeral=True
+        )
 
     @policy.command()
     @app_commands.choices(
@@ -618,6 +635,67 @@ class Player(commands.GroupCog):
         embed.set_footer(text="Keep collecting and trading to improve your stats!")
         embed.set_thumbnail(url=user.display_avatar)  # type: ignore
         await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @app_commands.command()
+    async def coins_give(
+        self,
+        interaction: discord.Interaction,
+        user: discord.User,
+        amount: int,
+    ):
+        """
+        Give coins to a user.
+
+        Parameters
+        ----------
+        user: discord.User
+            The user you want to give the coins to.
+        amount: int
+            The amount of coins you want to give.
+        """
+        if amount <= 0:
+            await interaction.followup.send(
+                "The amount to donate must be positive.", ephemeral=True
+            )
+            return
+        if user.bot:
+            await interaction.response.send_message("You cannot donate to bots.", ephemeral=True)
+            return
+
+        new_player, _ = await PlayerModel.get_or_create(discord_id=user.id)
+        old_player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
+
+        if new_player == old_player:
+            await interaction.followup.send("You cannot give coins to yourself.", ephemeral=True)
+            return
+        if new_player.donation_policy == DonationPolicy.ALWAYS_DENY:
+            await interaction.followup.send(
+                "This player does not accept donations. You can use trades instead.",
+                ephemeral=True,
+            )
+            return
+        if new_player.discord_id in self.bot.blacklist:
+            await interaction.followup.send(
+                "You cannot donate to a blacklisted user", ephemeral=True
+            )
+            return
+
+        if amount > old_player.coins:
+            await interaction.response.send_message(
+                f"You don't have {amount} {settings.plural_currency_name} to give.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer(thinking=True)
+        await new_player.add_coins(amount)
+        await old_player.remove_coins(amount)
+
+        plural = f"{settings.currency_name}" if amount == 1 else f"{settings.plural_currency_name}"
+
+        await interaction.followup.send(
+            f"You just gave {amount} {plural} {settings.currency_emoji} to {user.mention}!"
+        )
 
     @app_commands.command()
     @app_commands.choices(

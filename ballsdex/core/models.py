@@ -459,6 +459,7 @@ class Player(models.Model):
     accepted_tos = fields.BooleanField(
         description="Whether you've accepted the TOS or not", default=False
     )
+    coins = fields.BigIntField(default=0)
 
     def __str__(self) -> str:
         return str(self.discord_id)
@@ -471,6 +472,16 @@ class Player(models.Model):
 
     async def is_blocked(self, other_player: "Player") -> bool:
         return await Block.filter((Q(player1=self) & Q(player2=other_player))).exists()
+
+    async def add_coins(self, amount: int):
+        self.coins += amount
+        await self.save(update_fields=("coins",))
+
+    async def remove_coins(self, amount: int):
+        if self.coins < amount:
+            raise ValueError("Not enough coins")
+        self.coins -= amount
+        await self.save(update_fields=("coins",))
 
     @property
     def can_be_mentioned(self) -> bool:

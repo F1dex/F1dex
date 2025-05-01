@@ -36,6 +36,12 @@ class Settings:
         Set the name of the base command of the "players" cog, /balls by default
     favorited_collectible_emoji: str
         Set the emoji used to represent a favorited countryball, "❤️" by default.
+    currency_name: str
+        Set the name of the currency used in the bot, "point" by default.
+    plural_currency_name: str
+        Set the plural name of the currency, "points" by default.
+    currency_emoji: str
+        Set the emoji used to represent the currency, "💰" by default.
     max_favorites: int
         Set the maximum amount of favorited countryballs a user can have, 50 by default.
     max_attack_bonus:
@@ -80,6 +86,9 @@ class Settings:
     bot_name: str = "BallsDex"
     players_group_cog_name: str = "balls"
     favorited_collectible_emoji: str = "❤️"
+    currency_name: str = "point"
+    plural_currency_name: str = "points"
+    currency_emoji: str = "💰"
 
     max_favorites: int = 50
     max_attack_bonus: int = 20
@@ -142,6 +151,9 @@ def read_settings(path: "Path"):
     settings.bot_name = content["bot-name"]
     settings.players_group_cog_name = content["players-group-cog-name"]
     settings.favorited_collectible_emoji = content.get("favorited-collectible-emoji", "❤️")
+    settings.currency_name = content.get("currency-name", "point")
+    settings.plural_currency_name = content.get("plural-currency-name", "points")
+    settings.currency_emoji = content.get("currency-emoji", "💰")
 
     settings.about_description = content["about"]["description"]
     settings.github_link = content["about"]["github-link"]
@@ -235,6 +247,15 @@ players-group-cog-name: balls
 
 # emoji used to represent a favorited collectible
 favorited-collectible-emoji: ❤️
+
+# name of the currency used in the bot
+currency-name: point
+
+# plural name of the currency used in the bot
+plural-currency-name: points
+
+# emoji used to represent the currency
+currency-emoji: 💰
 
 # maximum amount of favorites that are allowed
 max-favorites: 50

@@ -58,6 +58,7 @@ class BattleView(View):
             return
 
         await self.battle.lock(battler)
+
         if self.battle.battler1.locked and self.battle.battler2.locked:
             await interaction.response.send_message(
                 "Your deck has been locked. Now confirm again to end the battle.",
@@ -152,6 +153,7 @@ class BattleMenu:
         battler1: BattlingUser,
         battler2: BattlingUser,
         max_drivers: int = 10,
+        wage: int = 0,
     ):
         self.cog = cog
         self.bot = interaction.client
@@ -159,6 +161,7 @@ class BattleMenu:
         self.battler1 = battler1
         self.battler2 = battler2
         self.max_drivers = max_drivers
+        self.wage = wage
         self.embed = discord.Embed()
         self.task: asyncio.Task | None = None
         self.current_view: BattleView | ConfirmView = BattleView(self)
@@ -176,6 +179,9 @@ class BattleMenu:
         add_command = self.cog.add.extras.get("mention", "`/battle add`")
         remove_command = self.cog.remove.extras.get("mention", "`/battle remove`")
         timestamp = f"<t:{self.end_time}:R>"
+        plural = (
+            f"{settings.currency_name}" if self.wage == 1 else f"{settings.plural_currency_name}"
+        )
 
         self.embed.title = "**Battling**"
         self.embed.color = discord.Colour.blurple()
@@ -183,8 +189,11 @@ class BattleMenu:
             f"Add or remove {settings.collectible_name}s from your deck "
             f"using the {add_command} and {remove_command} commands.\n"
             "Once you're finished, click the lock button below to confirm your deck.\n"
-            f"Add at least one {settings.collectible_name}.\n\n"
-            f"*This battle expires {timestamp}.*"
+            f"*This battle expires {timestamp}.*\n\n"
+            f"### Attention: This battle has a wage of {self.wage * 2} "
+            f"{settings.plural_currency_name}, which means that by accepting this battle, the "
+            f"loser will lose {self.wage} {plural} and the winner "
+            f"will gain {self.wage * 2}."
         )
         self.embed.set_footer(
             text="This message is updated every 15 seconds, but you can keep on editing your deck."
@@ -242,6 +251,11 @@ class BattleMenu:
         for countryball in self.battler1.proposal + self.battler2.proposal:
             await countryball.unlock()
 
+        if self.wage and self.battler1.locked:
+            await self.battler1.player.add_coins(self.wage)
+        if self.wage and self.battler2.locked:
+            await self.battler2.player.add_coins(self.wage)
+
         self.current_view.stop()
         for item in self.current_view.children:
             item.disabled = True  # type: ignore
@@ -261,6 +275,10 @@ class BattleMenu:
             self.current_view.stop()
             fill_battle_embed_fields(self.embed, self.bot, self.battler1, self.battler2)
 
+            if self.wage:
+                await self.battler1.player.remove_coins(self.wage)
+                await self.battler2.player.remove_coins(self.wage)
+
             self.embed.colour = discord.Colour.yellow()
             self.embed.description = (
                 "Both users locked their decks! Now confirm to conclude this battle."
@@ -279,10 +297,9 @@ class BattleMenu:
     async def confirm(self, battler: BattlingUser, interaction: discord.Interaction) -> bool:
         """
         Mark a user's deck as accepted. If both users accept, end the battle now.
-        If the battle is concluded, return True, otherwise if an error occurs, return False.
+        If the battle is concluded, return True.
         """
-        attack1, health1 = 0, 0
-        attack2, health2 = 0, 0
+        attack1 = health1 = attack2 = health2 = 0
 
         SPECIAL_BUFFS = [
             (0.08, [1, 2, 5, 6, 7, 9, 13, 14, 15, 17, 21]),
@@ -296,64 +313,76 @@ class BattleMenu:
             (2.00, [4]),
         ]
 
-        async def apply_special_buff(countryball: BallInstance):
-            cattack = countryball.attack
-            chealth = countryball.health
-
-            if countryball.special:
-                special = await Special.get(name=countryball.special.name)
-                for buff_percent, id_list in SPECIAL_BUFFS:
-                    if special.pk in id_list:
-                        cattack = int(cattack * (1 + buff_percent))
-                        chealth = int(chealth * (1 + buff_percent))
+        async def apply_special_buff(ball: BallInstance):
+            atk, hp = ball.attack, ball.health
+            if ball.special:
+                special = await Special.get(name=ball.special.name)
+                for buff, ids in SPECIAL_BUFFS:
+                    if special.pk in ids:
+                        atk = int(atk * (1 + buff))
+                        hp = int(hp * (1 + buff))
                         break
 
-            return cattack, chealth
+            return atk, hp
 
-        for countryball in self.battler1.proposal:
-            cattack, chealth = await apply_special_buff(countryball)
-            attack1 += cattack
-            health1 += chealth
+        for ball in self.battler1.proposal:
+            atk, hp = await apply_special_buff(ball)
+            attack1 += atk
+            health1 += hp
 
-        for countryball in self.battler2.proposal:
-            cattack, chealth = await apply_special_buff(countryball)
-            attack2 += cattack
-            health2 += chealth
+        for ball in self.battler2.proposal:
+            atk, hp = await apply_special_buff(ball)
+            attack2 += atk
+            health2 += hp
 
-        worl1 = attack1 / health2
-        worl2 = attack2 / health1
+        worl1 = attack1 / health2 if health2 else 0
+        worl2 = attack2 / health1 if health1 else 0
 
-        txt = f"{self.battler1.user.name}"
-        txt2 = f"{self.battler2.user.name}"
-
+        winner = None
         if worl1 > worl2:
-            winner = txt
+            winner = self.battler1
+            if self.wage:
+                await winner.player.add_coins(self.wage * 2)
         elif worl2 > worl1:
-            winner = txt2
+            winner = self.battler2
+            if self.wage:
+                await winner.player.add_coins(self.wage * 2)
         elif worl1 == worl2:
-            winner = "Draw"
-        else:
-            winner = "Error"
-            await interaction.followup.send("An error occurred", ephemeral=True)
+            if self.wage:
+                await self.battler1.player.add_coins(self.wage)
+                await self.battler2.player.add_coins(self.wage)
 
-        result = True
+        if winner == self.battler1:
+            await self.battler1.player.add_coins(15)
+            await self.battler2.player.add_coins(3)
+        elif winner == self.battler2:
+            await self.battler2.player.add_coins(15)
+            await self.battler1.player.add_coins(3)
+        elif winner is None:
+            await self.battler1.player.add_coins(10)
+            await self.battler2.player.add_coins(10)
+
         battler.accepted = True
         fill_battle_embed_fields(self.embed, self.bot, self.battler1, self.battler2)
+
         if self.battler1.accepted and self.battler2.accepted:
             if self.task and not self.task.cancelled():
-                # shouldn't happen but just in case
                 self.task.cancel()
-            if winner == "Draw":
+
+            if winner is None:
                 self.embed.description = (
-                    "This battle has ended in a draw, no "
-                    f"winner could be decided. Use stronger {settings.plural_collectible_name} "
-                    "next time!"
+                    "This battle has ended in a draw. Use stronger "
+                    f"{settings.plural_collectible_name} next time!"
                 )
             else:
-                self.embed.description = f"**The battle has concluded! {winner} is the winner!**"
+                self.embed.description = (
+                    f"**The battle has concluded! {winner.user.mention} is the winner!**"
+                )
+
             self.embed.colour = discord.Colour.green()
             self.current_view.stop()
             for item in self.current_view.children:
                 item.disabled = True  # type: ignore
+
         await self.message.edit(content=None, embed=self.embed, view=self.current_view)
-        return result
+        return True

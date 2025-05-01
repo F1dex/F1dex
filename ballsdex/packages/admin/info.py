@@ -118,9 +118,11 @@ class Info(app_commands.Group):
         """
         await interaction.response.defer(ephemeral=True, thinking=True)
         player = await Player.get_or_none(discord_id=user.id)
+
         if not player:
             await interaction.followup.send("The user you gave does not exist.", ephemeral=True)
             return
+
         url = (
             f"{settings.admin_url}/bd_models/player/{player.pk}/change/"
             if settings.admin_url
@@ -130,6 +132,12 @@ class Info(app_commands.Group):
             catch_date__gte=datetime.datetime.now() - datetime.timedelta(days=days),
             player=player,
         )
+        plural = (
+            f"{settings.currency_name}"
+            if player.coins == 1
+            else f"{settings.plural_currency_name}"
+        )
+
         embed = discord.Embed(
             title=f"{user} ({user.id})",
             url=url,
@@ -142,6 +150,7 @@ class Info(app_commands.Group):
             ),
             color=discord.Color.blurple(),
         )
+
         embed.add_field(
             name=f"{settings.plural_collectible_name.title()} caught ({days} days):",
             value=len(total_user_balls),
@@ -166,5 +175,10 @@ class Info(app_commands.Group):
             name=f"Total servers with {settings.plural_collectible_name} caught:",
             value=len(set([x.server_id for x in total_user_balls])),
         )
+        embed.add_field(
+            name=f"Amount of {settings.plural_currency_name} owned:",
+            value=f"{player.coins} {plural}",
+        )
         embed.set_thumbnail(url=user.display_avatar)  # type: ignore
+
         await interaction.followup.send(embed=embed, ephemeral=True)
