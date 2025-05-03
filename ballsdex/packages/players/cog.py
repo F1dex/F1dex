@@ -1,6 +1,6 @@
 import zipfile
 from io import BytesIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import discord
 from discord import app_commands
@@ -56,57 +56,15 @@ class Player(commands.GroupCog):
     policy = app_commands.Group(name="policy", description="Policy commands")
     coins = app_commands.Group(name="coins", description="Coin commands")
 
-    @app_commands.command()
-    async def balance(self, interaction: discord.Interaction):
-        """
-        Check your balance.
-        """
-        player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
-        plural = (
-            f"{settings.currency_name}"
-            if player.coins == 1
-            else f"{settings.plural_currency_name}"
-        )
-
-        await interaction.response.send_message(
-            f"You have {player.coins} {plural} {settings.currency_emoji}.", ephemeral=True
-        )
-
-    @policy.command()
+    @policy.command(name="set")
     @app_commands.choices(
-        policy=[
+        privacy=[
             app_commands.Choice(name="Open Inventory", value=PrivacyPolicy.ALLOW),
             app_commands.Choice(name="Private Inventory", value=PrivacyPolicy.DENY),
             app_commands.Choice(name="Friends Only", value=PrivacyPolicy.FRIENDS),
             app_commands.Choice(name="Same Server", value=PrivacyPolicy.SAME_SERVER),
-        ]
-    )
-    async def privacy(
-        self, interaction: discord.Interaction["BallsDexBot"], policy: PrivacyPolicy
-    ):
-        """
-        Set your privacy policy.
-
-        Parameters
-        ----------
-        policy: PrivacyPolicy
-            The new privacy policy to choose.
-        """
-        player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
-        if policy == PrivacyPolicy.SAME_SERVER and not self.bot.intents.members:
-            await interaction.response.send_message(
-                "I need the `members` intent to use this policy.", ephemeral=True
-            )
-            return
-        player.privacy_policy = PrivacyPolicy(policy.value)
-        await player.save()
-        await interaction.response.send_message(
-            f"Your privacy policy has been set to **{policy.name.lower()}**.", ephemeral=True
-        )
-
-    @policy.command()
-    @app_commands.choices(
-        policy=[
+        ],
+        donation=[
             app_commands.Choice(name="Accept all donations", value=DonationPolicy.ALWAYS_ACCEPT),
             app_commands.Choice(
                 name="Request your approval first", value=DonationPolicy.REQUEST_APPROVAL
@@ -115,127 +73,83 @@ class Player(commands.GroupCog):
             app_commands.Choice(
                 name="Accept donations from friends only", value=DonationPolicy.FRIENDS_ONLY
             ),
-        ]
-    )
-    async def donation(
-        self, interaction: discord.Interaction["BallsDexBot"], policy: DonationPolicy
-    ):
-        """
-        Change how you want to receive donations from /balls give
-
-        Parameters
-        ----------
-        policy: DonationPolicy
-            The new policy for accepting donations
-        """
-        player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
-        player.donation_policy = DonationPolicy(policy.value)
-        if policy.value == DonationPolicy.ALWAYS_ACCEPT:
-            await interaction.response.send_message(
-                "Setting updated, you will now receive all donated "
-                f"{settings.plural_collectible_name} immediately.",
-                ephemeral=True,
-            )
-        elif policy.value == DonationPolicy.REQUEST_APPROVAL:
-            await interaction.response.send_message(
-                "Setting updated, you will now have to approve donation requests manually.",
-                ephemeral=True,
-            )
-        elif policy.value == DonationPolicy.ALWAYS_DENY:
-            await interaction.response.send_message(
-                "Setting updated, it is now impossible to use "
-                f"`/{settings.players_group_cog_name} give` with "
-                "you. It is still possible to perform donations using the trade system.",
-                ephemeral=True,
-            )
-        elif policy.value == DonationPolicy.FRIENDS_ONLY:
-            await interaction.response.send_message(
-                "Setting updated, you will now only receive donated "
-                f"{settings.plural_collectible_name} from players you have "
-                "added as friends in the bot.",
-                ephemeral=True,
-            )
-        else:
-            await interaction.response.send_message("Invalid input!", ephemeral=True)
-            return
-        await player.save()  # do not save if the input is invalid
-
-    @policy.command()
-    @app_commands.choices(
-        policy=[
-            app_commands.Choice(name="Accept all mentions", value=MentionPolicy.ALLOW),
-            app_commands.Choice(name="Deny all mentions", value=MentionPolicy.DENY),
-        ]
-    )
-    async def mention(
-        self, interaction: discord.Interaction["BallsDexBot"], policy: MentionPolicy
-    ):
-        """
-        Set your mention policy.
-
-        Parameters
-        ----------
-        policy: MentionPolicy
-            The new policy for mentions
-        """
-        player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
-        player.mention_policy = policy
-        await player.save()
-        await interaction.response.send_message(
-            f"Your mention policy has been set to **{policy.name.lower()}**.", ephemeral=True
-        )
-
-    @policy.command()
-    @app_commands.choices(
-        policy=[
-            app_commands.Choice(name="Accept all friend requests", value=FriendPolicy.ALLOW),
-            app_commands.Choice(name="Deny all friend requests", value=FriendPolicy.DENY),
-        ]
-    )
-    async def friends(self, interaction: discord.Interaction["BallsDexBot"], policy: FriendPolicy):
-        """
-        Set your friend policy.
-
-        Parameters
-        ----------
-        policy: FriendPolicy
-            The new policy for friend requests.
-        """
-        player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
-        player.friend_policy = policy
-        await player.save()
-        await interaction.response.send_message(
-            f"Your friend request policy has been set to **{policy.name.lower()}**.",
-            ephemeral=True,
-        )
-
-    @policy.command()
-    @app_commands.choices(
-        policy=[
+        ],
+        trade_cooldown=[
             app_commands.Choice(
                 name="Use 10s acceptance cooldown", value=TradeCooldownPolicy.COOLDOWN
             ),
             app_commands.Choice(
                 name="Bypass acceptance cooldown", value=TradeCooldownPolicy.BYPASS
             ),
-        ]
+        ],
+        mention=[
+            app_commands.Choice(name="Accept all mentions", value=MentionPolicy.ALLOW),
+            app_commands.Choice(name="Deny all mentions", value=MentionPolicy.DENY),
+        ],
+        friends=[
+            app_commands.Choice(name="Accept all friend requests", value=FriendPolicy.ALLOW),
+            app_commands.Choice(name="Deny all friend requests", value=FriendPolicy.DENY),
+        ],
     )
-    async def trade_cooldown(self, interaction: discord.Interaction, policy: TradeCooldownPolicy):
+    async def policy_set(
+        self,
+        interaction: discord.Interaction,
+        privacy: Optional[PrivacyPolicy] = None,
+        donation: Optional[DonationPolicy] = None,
+        trade_cooldown: Optional[TradeCooldownPolicy] = None,
+        mention: Optional[MentionPolicy] = None,
+        friends: Optional[FriendPolicy] = None,
+    ):
         """
-        Set your trade cooldown policy.
+        Set your various bot policies.
 
         Parameters
         ----------
-        policy: TradeCooldownPolicy
-            The new policy for trade acceptance cooldown.
+        privacy: PrivacyPolicy (Optional)
+            Set your privacy policy.
+        donation: DonationPolicy (Optional)
+            Set your donation policy.
+        trade_cooldown: TradeCooldownPolicy (Optional)
+            Set your trade cooldown policy.
+        mention: MentionPolicy (Optional)
+            Set your mention policy.
+        friends: FriendPolicy (Optional)
+            Set your friend request policy.
         """
         player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
-        player.trade_cooldown_policy = policy
-        await player.save()
-        await interaction.response.send_message(
-            f"Your trade acceptance cooldown policy has been set to **{policy.name.lower()}**.",
-            ephemeral=True,
-        )
+        messages = []
+
+        if privacy:
+            if privacy == PrivacyPolicy.SAME_SERVER and not self.bot.intents.members:
+                await interaction.response.send_message(
+                    "I need the `members` intent to use this policy.", ephemeral=True
+                )
+                return
+            player.privacy_policy = privacy
+            messages.append(f"Your privacy policy has been set to **{privacy.name}**.")
+
+        if donation:
+            player.donation_policy = donation
+            messages.append(f"Your donation policy has been set to **{donation.name}**.")
+
+        if trade_cooldown:
+            player.trade_cooldown_policy = trade_cooldown
+            messages.append(f"Your cap donation policy has been set to **{trade_cooldown.name}**.")
+
+        if mention:
+            player.mention_policy = mention
+            messages.append(f"Your mention policy has been set to **{mention.name}**.")
+
+        if friends:
+            player.friend_policy = friends
+            messages.append(f"Your friend request policy has been set to **{friends.name}**.")
+
+        if messages:
+            await interaction.response.send_message("\n".join(messages), ephemeral=True)
+            await player.save()
+        else:
+            await interaction.response.send_message("No policies were updated.", ephemeral=True)
+            return
 
     @app_commands.command()
     async def delete(self, interaction: discord.Interaction["BallsDexBot"]):
@@ -558,6 +472,22 @@ class Player(commands.GroupCog):
 
         pages = Pages(source=source, interaction=interaction, compact=True)
         await pages.start(ephemeral=True)
+
+    @app_commands.command()
+    async def balance(self, interaction: discord.Interaction):
+        """
+        Check your balance.
+        """
+        player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
+        plural = (
+            f"{settings.currency_name}"
+            if player.coins == 1
+            else f"{settings.plural_currency_name}"
+        )
+
+        await interaction.response.send_message(
+            f"You have {player.coins} {plural} {settings.currency_emoji}.", ephemeral=True
+        )
 
     @app_commands.command()
     @app_commands.checks.cooldown(1, 60, key=lambda i: i.user.id)
