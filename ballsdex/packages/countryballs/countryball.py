@@ -99,14 +99,6 @@ class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name
 
             await interaction.followup.send(
                 wrong_message,
-                f"{interaction.user.mention} {self.view.get_message(ball, has_caught_before)}",
-                allowed_mentions=discord.AllowedMentions(users=player.can_be_mentioned),
-            )
-            await interaction.followup.edit_message(self.view.message.id, view=self.view)
-            await player.add_coins(amount_from_rarity(self.ball.rarity))
-        else:
-            await interaction.followup.send(
-                f"{interaction.user.mention} Wrong name!",
                 allowed_mentions=discord.AllowedMentions(users=player.can_be_mentioned),
                 ephemeral=False,
             )
@@ -282,7 +274,6 @@ class BallSpawnView(View):
 
                 self.message = await channel.send(
                     spawn_message,
-                    f"{random_phrase}",
                     view=self,
                     file=discord.File(file_location, filename=file_name),
                 )
