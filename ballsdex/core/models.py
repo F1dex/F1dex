@@ -635,3 +635,29 @@ class BattleObject(models.Model):
 
     def __str__(self) -> str:
         return str(self.pk)
+
+
+class Packs(models.Model):
+    id: int
+    name = fields.CharField(max_length=64)
+    description = fields.CharField(max_length=2000)
+    price = fields.IntField(description="Price in coins", default=0)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    rewards = fields.CharField(max_length=1000)
+
+    def __str__(self) -> str:
+        return str(self.pk)
+
+
+class PackInstance(models.Model):
+    id: int
+    player: fields.ForeignKeyRelation[Player] = fields.ForeignKeyField(
+        "models.Player", related_name="packs"
+    )
+    pack: fields.ForeignKeyRelation[Packs] = fields.ForeignKeyField(
+        "models.Packs", related_name="packs"
+    )
+    opened = fields.BooleanField(default=False)
+
+    def __str__(self) -> str:
+        return str(self.pk)
