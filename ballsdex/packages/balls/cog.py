@@ -380,7 +380,9 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         """
         if not countryball:
             return
+
         await interaction.response.defer(thinking=True)
+
         content, file, view = await countryball.prepare_for_message(interaction)
         await interaction.followup.send(content=content, file=file, view=view)
         file.close()
@@ -768,8 +770,13 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             Filter the results of the comparison to a special event.
         """
         await interaction.response.defer(thinking=True)
+
         if interaction.user == user:
             await interaction.followup.send("You cannot compare with yourself.", ephemeral=True)
+            return
+
+        if user.bot:
+            await interaction.followup.send("You cannot interact with bots.", ephemeral=True)
             return
 
         try:
@@ -807,6 +814,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 "You cannot compare with a user that has you blocked.", ephemeral=True
             )
             return
+
         queryset = BallInstance.filter(ball__enabled=True).distinct()
         if special:
             queryset = queryset.filter(special=special)
@@ -855,6 +863,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             fill_fields("Both have", both)
         else:
             entries.append(("__**Both have**__", "None"))
+
         fill_fields(f"{interaction.user.display_name} has", user1_only)
         fill_fields(f"{user.display_name} has", user2_only)
         fill_fields("Neither have", neither)
@@ -905,6 +914,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                     f"You don't have any {settings.plural_collectible_name} yet."
                 )
             return
+
         total = len(balls)
         total_traded = len([x for x in balls if x.trade_player])
         total_caught_self = total - total_traded
@@ -935,8 +945,10 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         embed.set_author(
             name=interaction.user.display_name, icon_url=interaction.user.display_avatar.url
         )
+
         if countryball:
             emoji = self.bot.get_emoji(countryball.emoji_id)
             if emoji:
                 embed.set_thumbnail(url=emoji.url)
+
         await interaction.followup.send(embed=embed)
