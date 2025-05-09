@@ -127,7 +127,7 @@ async def open_pack(
     view = OpenMoreView(bot, interaction, player, pack)
     result_embed.set_footer(text=f"You still have {pack_updated_count} {pack.name} packs left!")
 
-    await interaction.followup.send(embed=result_embed, view=view)
+    await interaction.followup.send(embed=result_embed, view=view, ephemeral=True)
 
 
 class PackConfirmChoiceView(View):
@@ -340,7 +340,7 @@ class Packs(commands.GroupCog):
         """
         pack_to_buy = await PackModel.get(name=pack.name)
         player = await Player.get(discord_id=interaction.user.id)
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
 
         if not pack_to_buy:
             await interaction.followup.send("Pack not found.", ephemeral=True)
@@ -398,7 +398,7 @@ class Packs(commands.GroupCog):
         View your pack inventory.
         """
         player = await Player.get(discord_id=interaction.user.id)
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
 
         owned_packs = (
             await PackInstance.filter(player=player, opened=False).prefetch_related("pack").all()
@@ -460,7 +460,7 @@ class Packs(commands.GroupCog):
             )
             return
 
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
 
         view = PackConfirmChoiceView(interaction.client, interaction, player)
         embed = discord.Embed(
@@ -489,7 +489,5 @@ class Packs(commands.GroupCog):
             )
         except discord.NotFound:
             pass
-        # add packs to admin panel
         # add pack give, pack trade add
         # add admin pack give, admin pack remove
-        # make all cmds ephemeral, should add an ephemeral policy in the future
