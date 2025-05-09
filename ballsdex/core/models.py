@@ -25,6 +25,7 @@ balls: dict[int, Ball] = {}
 regimes: dict[int, Regime] = {}
 economies: dict[int, Economy] = {}
 specials: dict[int, Special] = {}
+packs: dict[int, Packs] = {}
 
 
 async def lower_catch_names(
@@ -644,6 +645,9 @@ class Packs(models.Model):
     price = fields.IntField(description="Price in coins", default=0)
     created_at = fields.DatetimeField(auto_now_add=True)
     rewards = fields.CharField(max_length=1000)
+    purchasable = fields.BooleanField(
+        description="Whether this pack can be purchased or not", default=True
+    )
 
     def __str__(self) -> str:
         return str(self.pk)

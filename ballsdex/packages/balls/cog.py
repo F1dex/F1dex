@@ -63,6 +63,7 @@ class DonationRequest(View):
     async def on_timeout(self):
         for item in self.children:
             item.disabled = True  # type: ignore
+
         try:
             await self.original_interaction.followup.edit_message(
                 "@original",
@@ -70,6 +71,7 @@ class DonationRequest(View):
             )
         except discord.NotFound:
             pass
+
         await self.countryball.unlock()
 
     @button(
@@ -79,14 +81,17 @@ class DonationRequest(View):
         self.stop()
         for item in self.children:
             item.disabled = True  # type: ignore
+
         self.countryball.favorite = False
         self.countryball.trade_player = self.countryball.player
         self.countryball.player = self.new_player
         await self.countryball.save()
+
         trade = await Trade.create(player1=self.countryball.trade_player, player2=self.new_player)
         await TradeObject.create(
             trade=trade, ballinstance=self.countryball, player=self.countryball.trade_player
         )
+
         await interaction.response.edit_message(
             content=interaction.message.content  # type: ignore
             + "\n\N{WHITE HEAVY CHECK MARK} The donation was accepted!",
@@ -102,11 +107,13 @@ class DonationRequest(View):
         self.stop()
         for item in self.children:
             item.disabled = True  # type: ignore
+
         await interaction.response.edit_message(
             content=interaction.message.content  # type: ignore
             + "\n\N{CROSS MARK} The donation was denied.",
             view=self,
         )
+
         await self.countryball.unlock()
 
 
@@ -567,6 +574,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             interaction = view.interaction_response
         else:
             await interaction.response.defer()
+
         await countryball.lock_for_trade()
         new_player, _ = await Player.get_or_create(discord_id=user.id)
         old_player = countryball.player

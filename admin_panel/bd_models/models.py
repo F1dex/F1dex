@@ -476,12 +476,13 @@ class Pack(models.Model):
     price = models.PositiveIntegerField(default=0, help_text="Price in coins")
     rewards = models.TextField(max_length=1000)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    purchasable = models.BooleanField(help_text="Whether this pack can be purchased", default=True)
 
     def __str__(self):
         return f"Pack #{self.pk}: {self.name}"
 
     class Meta:
-        db_table = "pack"
+        db_table = "packs"
         verbose_name = "Pack"
         verbose_name_plural = "Packs"
         managed = True
