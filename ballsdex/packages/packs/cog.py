@@ -74,16 +74,17 @@ async def open_pack(
         collectible = await decide_collectible(bot=bot)
         applied_special: Special | None = None
 
-        if special:
-            divisor = len(special)
-            divide_by = 1.333 if divisor == 2 else 2
+        total_chance = sum(sp["chance"] for sp in special)
+        roll = random.uniform(0, 100)
 
-            for sp in special:
-                roll = random.randint(1, 100)
-                if roll <= sp["chance"] / (divisor / divide_by):
-                    applied_special = await Special.get_or_none(name=sp["type"].strip())
-                    if applied_special:
-                        break
+        if roll <= total_chance and special:
+            selected_type = random.choices(
+                population=[sp["type"].strip() for sp in special],
+                weights=[sp["chance"] for sp in special],
+                k=1
+            )[0]
+
+            applied_special = await Special.get(name=selected_type)
 
         cb = await BallInstance.create(
             player=player,

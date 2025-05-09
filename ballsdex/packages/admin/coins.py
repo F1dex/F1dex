@@ -18,7 +18,7 @@ class Coins(app_commands.Group):
         self,
         interaction: discord.Interaction[BallsDexBot],
         user: discord.User,
-        amount: int = 1,
+        amount: int,
     ):
         """
         Add an amount of coins to a user.
@@ -62,7 +62,7 @@ class Coins(app_commands.Group):
         self,
         interaction: discord.Interaction[BallsDexBot],
         user: discord.User,
-        amount: int = 1,
+        amount: int,
     ):
         """
         Remove an amount of coins from a user.
