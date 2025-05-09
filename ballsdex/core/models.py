@@ -647,7 +647,7 @@ class Packs(models.Model):
     id: int
     name = fields.CharField(max_length=64)
     description = fields.CharField(max_length=2000)
-    price = fields.IntField(description="Price in coins", default=0)
+    price = fields.IntField(description="Price in points", default=0)
     created_at = fields.DatetimeField(auto_now_add=True)
     rewards = fields.CharField(max_length=1000)
     purchasable = fields.BooleanField(
