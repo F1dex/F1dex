@@ -20,7 +20,6 @@ from ballsdex.core.models import (
     Special,
     Trade,
     TradeObject,
-    balls,
     specials,
 )
 from ballsdex.core.utils.utils import decide_collectible

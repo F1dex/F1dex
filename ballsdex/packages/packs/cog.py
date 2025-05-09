@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
 
 
-
 def parse_rewards(rewards_str: str) -> dict:
     # TODO: add specify_collectibles to parsing with exact matching
     rewards = {"special": []}
@@ -106,9 +105,7 @@ async def open_pack(
         choices = parsed["currency_amount_choices"]
         if choices:
             currency_reward = random.choices(
-                [c["amount"] for c in choices],
-                weights=[c["chance"] for c in choices],
-                k=1
+                [c["amount"] for c in choices], weights=[c["chance"] for c in choices], k=1
             )[0]
     elif "currency_amount" in parsed:
         currency_reward = parsed["currency_amount"]
@@ -117,9 +114,7 @@ async def open_pack(
     await player.save()
 
     grammar = (
-        f"{settings.currency_name}"
-        if currency_reward == 1
-        else f"{settings.plural_currency_name}"
+        f"{settings.currency_name}" if currency_reward == 1 else f"{settings.plural_currency_name}"
     )
 
     reward_lines.append(f"\n**+{currency_reward} {grammar} {settings.currency_emoji}**")
@@ -267,7 +262,7 @@ class OpenMoreView(View):
     @button(
         style=discord.ButtonStyle.danger,
         emoji="\N{HEAVY MULTIPLICATION X}\N{VARIATION SELECTOR-16}",
-        label="Return"
+        label="Return",
     )
     async def return_home(self, interaction: discord.Interaction["BallsDexBot"], button: Button):
         self.value = False
@@ -497,3 +492,4 @@ class Packs(commands.GroupCog):
         # add packs to admin panel
         # add pack give, pack trade add
         # add admin pack give, admin pack remove
+        # make all cmds ephemeral, should add an ephemeral policy in the future

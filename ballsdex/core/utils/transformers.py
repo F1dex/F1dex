@@ -16,7 +16,6 @@ from ballsdex.core.models import (
     Ball,
     BallInstance,
     Economy,
-    PackInstance,
     Packs,
     Regime,
     Special,

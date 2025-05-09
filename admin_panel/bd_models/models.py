@@ -471,7 +471,7 @@ class BattleObject(models.Model):
         db_table = "battleobject"
 
 
-class Pack(models.Model):
+class Packs(models.Model):
     name = models.CharField(max_length=64)
     description = models.TextField(max_length=2000)
     price = models.PositiveIntegerField(default=0, help_text="Price in coins")
