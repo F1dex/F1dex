@@ -306,6 +306,7 @@ class Packs(commands.GroupCog):
                 player=player,
                 ball=collectible,
                 special=applied_special,
+                packed=True,
             )
 
             name_display = f"{applied_special.name} " if applied_special else ""
@@ -319,5 +320,4 @@ class Packs(commands.GroupCog):
         )
         await interaction.followup.send(embed=result_embed)
         # fix display, make it better
-        # track whether a ball is from packs or not
         # fix specials

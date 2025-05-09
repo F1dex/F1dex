@@ -925,7 +925,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         total = len(balls)
         total_traded = len([x for x in balls if x.trade_player])
-        total_caught_self = total - total_traded
+        total_packed = len([x for x in balls if x.packed])
+        total_caught_self = total - total_traded - total_packed
         special_count = len([x for x in balls if x.special])
         specials = defaultdict(int)
         all_specials = await Special.filter(hidden=False)
@@ -936,7 +937,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         desc = (
             f"**Total**: {total:,} ({total_caught_self:,} caught, "
-            f"{total_traded:,} received from trade)\n"
+            f"{total_traded:,} received from trade, {total_packed:,} packed)\n"
             f"**Total Specials**: {special_count:,}\n\n"
         )
         if specials:

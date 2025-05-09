@@ -232,6 +232,7 @@ class BallInstance(models.Model):
         default=None,
     )
     extra_data = fields.JSONField(default={})
+    packed = fields.BooleanField(default=False)
 
     class Meta:
         unique_together = ("player", "id")
@@ -368,6 +369,10 @@ class BallInstance(models.Model):
                 else f"user with ID {self.trade_player.discord_id}"
             )
             trade_content = f"Obtained by trade with {original_player_name}.\n"
+
+        if self.packed:
+            trade_content = f"This {settings.collectible_name} was packed.\n"
+
         content = (
             f"ID: `#{self.pk:0X}`\n"
             f"Caught on {format_dt(self.catch_date)} ({format_dt(self.catch_date, style='R')}).\n"
