@@ -121,12 +121,17 @@ async def open_pack(
     reward_lines.append(f"\n**+{currency_reward} {grammar} {settings.currency_emoji}**")
 
     result_embed = discord.Embed(
-        title=f"🎉 {pack.name.title()} Pack Opened!",
+        title=f"🎉 '{pack.name.title()}' Pack Opened!",
         description="\n".join(reward_lines),
         color=discord.Color.gold(),
     )
     view = OpenMoreView(bot, interaction, player, pack)
-    result_embed.set_footer(text=f"You still have {pack_updated_count} {pack.name} packs left!")
+    if pack_updated_count == 0:
+        result_embed.set_footer(text="You don't have any more packs left!")
+    else:
+        result_embed.set_footer(
+            text=f"You still have {pack_updated_count} {pack.name} packs left!"
+        )
 
     await interaction.followup.send(embed=result_embed, view=view, ephemeral=True)
 

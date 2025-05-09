@@ -4,7 +4,7 @@ from discord import app_commands
 from ballsdex.core.bot import BallsDexBot
 from ballsdex.core.models import PackInstance, Player
 from ballsdex.core.utils.logging import log_action
-from ballsdex.core.utils.transformers import PackEnabledTransform
+from ballsdex.core.utils.transformers import PackTransform
 from ballsdex.settings import settings
 
 
@@ -19,7 +19,7 @@ class Packs(app_commands.Group):
         self,
         interaction: discord.Interaction[BallsDexBot],
         user: discord.User,
-        pack: PackEnabledTransform,
+        pack: PackTransform,
         amount: int = 1,
     ):
         """
@@ -29,7 +29,7 @@ class Packs(app_commands.Group):
         ----------
         user: discord.User
             The user you want to add the packs to.
-        pack: PackEnabledTransform
+        pack: PackTransform
             The pack you want to add to the user.
         amount: int
             The amount of packs you want to add to the user.
