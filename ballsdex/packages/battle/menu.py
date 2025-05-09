@@ -190,11 +190,16 @@ class BattleMenu:
             f"using the {add_command} and {remove_command} commands.\n"
             "Once you're finished, click the lock button below to confirm your deck.\n"
             f"*This battle expires {timestamp}.*\n\n"
-            f"### Attention: This battle has a wage of {self.wage * 2} "
-            f"{settings.plural_currency_name}, which means that by accepting this battle, the "
-            f"loser will lose {self.wage} {plural} and the winner "
-            f"will gain {self.wage}."
         )
+
+        if self.wage and self.wage != 0:
+            self.embed.description += (
+                f"### Attention: This battle has a wage of {self.wage * 2} "
+                f"{settings.plural_currency_name}, which means that by accepting this battle, the "
+                f"loser will lose {self.wage} {plural} and the winner "
+                f"will gain {self.wage}."
+            )
+
         self.embed.set_footer(
             text="This message is updated every 15 seconds, but you can keep on editing your deck."
         )

@@ -16,10 +16,12 @@ from ballsdex.core.models import (
     Ball,
     BallInstance,
     Economy,
+    Packs,
     Regime,
     Special,
     balls,
     economies,
+    packs,
     regimes,
 )
 from ballsdex.settings import settings
@@ -328,6 +330,22 @@ class EconomyTransformer(TTLModelTransformer[Economy]):
         return economies.values()
 
 
+class PackTransformer(TTLModelTransformer[Packs]):
+    name = "pack"
+    model = Packs()
+
+    def key(self, model: Packs) -> str:
+        return model.name
+
+    async def load_items(self) -> Iterable[Packs]:
+        return packs.values()
+
+
+class PackEnabledTransformer(PackTransformer):
+    async def load_items(self) -> Iterable[Packs]:
+        return await Packs.filter(purchasable=True).all()
+
+
 BallTransform = app_commands.Transform[Ball, BallTransformer]
 BallInstanceTransform = app_commands.Transform[BallInstance, BallInstanceTransformer]
 SpecialTransform = app_commands.Transform[Special, SpecialTransformer]
@@ -335,3 +353,5 @@ RegimeTransform = app_commands.Transform[Regime, RegimeTransformer]
 EconomyTransform = app_commands.Transform[Economy, EconomyTransformer]
 SpecialEnabledTransform = app_commands.Transform[Special, SpecialEnabledTransformer]
 BallEnabledTransform = app_commands.Transform[Ball, BallEnabledTransformer]
+PackTransform = app_commands.Transform[Packs, PackTransformer]
+PackEnabledTransform = app_commands.Transform[Packs, PackEnabledTransformer]

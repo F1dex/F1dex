@@ -63,6 +63,7 @@ class DonationRequest(View):
     async def on_timeout(self):
         for item in self.children:
             item.disabled = True  # type: ignore
+
         try:
             await self.original_interaction.followup.edit_message(
                 "@original",
@@ -70,6 +71,7 @@ class DonationRequest(View):
             )
         except discord.NotFound:
             pass
+
         await self.countryball.unlock()
 
     @button(
@@ -79,14 +81,17 @@ class DonationRequest(View):
         self.stop()
         for item in self.children:
             item.disabled = True  # type: ignore
+
         self.countryball.favorite = False
         self.countryball.trade_player = self.countryball.player
         self.countryball.player = self.new_player
         await self.countryball.save()
+
         trade = await Trade.create(player1=self.countryball.trade_player, player2=self.new_player)
         await TradeObject.create(
             trade=trade, ballinstance=self.countryball, player=self.countryball.trade_player
         )
+
         await interaction.response.edit_message(
             content=interaction.message.content  # type: ignore
             + "\n\N{WHITE HEAVY CHECK MARK} The donation was accepted!",
@@ -102,11 +107,13 @@ class DonationRequest(View):
         self.stop()
         for item in self.children:
             item.disabled = True  # type: ignore
+
         await interaction.response.edit_message(
             content=interaction.message.content  # type: ignore
             + "\n\N{CROSS MARK} The donation was denied.",
             view=self,
         )
+
         await self.countryball.unlock()
 
 
@@ -533,14 +540,17 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         """
         if not countryball:
             return
+
         if not countryball.is_tradeable:
             await interaction.response.send_message(
                 f"You cannot donate this {settings.collectible_name}.", ephemeral=True
             )
             return
+
         if user.bot:
             await interaction.response.send_message("You cannot donate to bots.", ephemeral=True)
             return
+
         if await countryball.is_locked():
             await interaction.response.send_message(
                 f"This {settings.collectible_name} is currently locked for a trade. "
@@ -548,6 +558,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 ephemeral=True,
             )
             return
+
         favorite = countryball.favorite
         if favorite:
             view = ConfirmChoiceView(
@@ -567,6 +578,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             interaction = view.interaction_response
         else:
             await interaction.response.defer()
+
         await countryball.lock_for_trade()
         new_player, _ = await Player.get_or_create(discord_id=user.id)
         old_player = countryball.player
@@ -577,6 +589,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             )
             await countryball.unlock()
             return
+
         if new_player.donation_policy == DonationPolicy.ALWAYS_DENY:
             await interaction.followup.send(
                 "This player does not accept donations. You can use trades instead.",
@@ -594,6 +607,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 )
                 await countryball.unlock()
                 return
+
         blocked = await new_player.is_blocked(old_player)
         if blocked:
             await interaction.followup.send(
@@ -601,12 +615,14 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             )
             await countryball.unlock()
             return
+
         if new_player.discord_id in self.bot.blacklist:
             await interaction.followup.send(
                 "You cannot donate to a blacklisted user.", ephemeral=True
             )
             await countryball.unlock()
             return
+
         elif new_player.donation_policy == DonationPolicy.REQUEST_APPROVAL:
             await interaction.followup.send(
                 f"Hey {user.mention}, {interaction.user.name} wants to give you "
@@ -640,6 +656,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 f"You just gave the {settings.collectible_name} {cb_txt} to {user.mention}!",
                 allowed_mentions=discord.AllowedMentions(users=new_player.can_be_mentioned),
             )
+
         await countryball.unlock()
 
     @app_commands.command()
@@ -917,7 +934,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         total = len(balls)
         total_traded = len([x for x in balls if x.trade_player])
-        total_caught_self = total - total_traded
+        total_packed = len([x for x in balls if x.packed])
+        total_caught_self = total - total_traded - total_packed
         special_count = len([x for x in balls if x.special])
         specials = defaultdict(int)
         all_specials = await Special.filter(hidden=False)
@@ -928,7 +946,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         desc = (
             f"**Total**: {total:,} ({total_caught_self:,} caught, "
-            f"{total_traded:,} received from trade)\n"
+            f"{total_traded:,} received from trade, {total_packed:,} packed)\n"
             f"**Total Specials**: {special_count:,}\n\n"
         )
         if specials:

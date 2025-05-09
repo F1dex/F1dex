@@ -25,6 +25,7 @@ balls: dict[int, Ball] = {}
 regimes: dict[int, Regime] = {}
 economies: dict[int, Economy] = {}
 specials: dict[int, Special] = {}
+packs: dict[int, Packs] = {}
 
 
 async def lower_catch_names(
@@ -231,6 +232,7 @@ class BallInstance(models.Model):
         default=None,
     )
     extra_data = fields.JSONField(default={})
+    packed = fields.BooleanField(default=False)
 
     class Meta:
         unique_together = ("player", "id")
@@ -367,6 +369,10 @@ class BallInstance(models.Model):
                 else f"user with ID {self.trade_player.discord_id}"
             )
             trade_content = f"Obtained by trade with {original_player_name}.\n"
+
+        if self.packed:
+            trade_content = f"This {settings.collectible_name} was packed.\n"
+
         content = (
             f"ID: `#{self.pk:0X}`\n"
             f"Caught on {format_dt(self.catch_date)} ({format_dt(self.catch_date, style='R')}).\n"
@@ -632,6 +638,35 @@ class BattleObject(models.Model):
     player: fields.ForeignKeyRelation[Player] = fields.ForeignKeyField(
         "models.Player", related_name="battleobjects"
     )
+
+    def __str__(self) -> str:
+        return str(self.pk)
+
+
+class Packs(models.Model):
+    id: int
+    name = fields.CharField(max_length=64)
+    description = fields.CharField(max_length=2000)
+    price = fields.IntField(description="Price in coins", default=0)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    rewards = fields.CharField(max_length=1000)
+    purchasable = fields.BooleanField(
+        description="Whether this pack can be purchased or not", default=True
+    )
+
+    def __str__(self) -> str:
+        return str(self.pk)
+
+
+class PackInstance(models.Model):
+    id: int
+    player: fields.ForeignKeyRelation[Player] = fields.ForeignKeyField(
+        "models.Player", related_name="packs"
+    )
+    pack: fields.ForeignKeyRelation[Packs] = fields.ForeignKeyField(
+        "models.Packs", related_name="packs"
+    )
+    opened = fields.BooleanField(default=False)
 
     def __str__(self) -> str:
         return str(self.pk)

@@ -631,6 +631,7 @@ class Player(commands.GroupCog):
                 "The amount to donate must be positive.", ephemeral=True
             )
             return
+
         if user.bot:
             await interaction.response.send_message("You cannot donate to bots.", ephemeral=True)
             return
@@ -641,12 +642,14 @@ class Player(commands.GroupCog):
         if new_player == old_player:
             await interaction.followup.send("You cannot give coins to yourself.", ephemeral=True)
             return
+
         if new_player.donation_policy == DonationPolicy.ALWAYS_DENY:
             await interaction.followup.send(
                 "This player does not accept donations. You can use trades instead.",
                 ephemeral=True,
             )
             return
+
         if new_player.discord_id in self.bot.blacklist:
             await interaction.followup.send(
                 "You cannot donate to a blacklisted user", ephemeral=True
@@ -661,11 +664,11 @@ class Player(commands.GroupCog):
             return
 
         await interaction.response.defer(thinking=True)
+
         await new_player.add_coins(amount)
         await old_player.remove_coins(amount)
 
         plural = f"{settings.currency_name}" if amount == 1 else f"{settings.plural_currency_name}"
-
         await interaction.followup.send(
             f"You just gave {amount} {plural} {settings.currency_emoji} to {user.mention}!"
         )

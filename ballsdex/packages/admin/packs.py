@@ -2,33 +2,37 @@ import discord
 from discord import app_commands
 
 from ballsdex.core.bot import BallsDexBot
-from ballsdex.core.models import Player
+from ballsdex.core.models import PackInstance, Player
 from ballsdex.core.utils.logging import log_action
+from ballsdex.core.utils.transformers import PackEnabledTransform
 from ballsdex.settings import settings
 
 
-class Coins(app_commands.Group):
+class Packs(app_commands.Group):
     """
-    Coin management
+    Pack management
     """
 
     @app_commands.command(name="add")
     @app_commands.checks.has_any_role(*settings.root_role_ids)
-    async def coins_add(
+    async def packs_add(
         self,
         interaction: discord.Interaction[BallsDexBot],
         user: discord.User,
+        pack: PackEnabledTransform,
         amount: int = 1,
     ):
         """
-        Add an amount of coins to a user.
+        Add an amount of packs to a user.
 
         Parameters
         ----------
         user: discord.User
-            The user you want to add the coins to.
+            The user you want to add the packs to.
+        pack: PackEnabledTransform
+            The pack you want to add to the user.
         amount: int
-            The amount of coins you want to add to the user.
+            The amount of packs you want to add to the user.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
 
@@ -39,42 +43,49 @@ class Coins(app_commands.Group):
             return
         if amount > 1000000:
             await interaction.followup.send(
-                "You cannot give more than 1000000 coins at once.", ephemeral=True
+                "You cannot give more than 1000000 packs at once.", ephemeral=True
             )
             return
 
         player, _ = await Player.get_or_create(discord_id=user.id)
-        await player.add_coins(amount)
-        plural = f"{settings.currency_name}" if amount == 1 else f"{settings.plural_currency_name}"
+        plural = "" if amount == 1 else "s"
+
+        for i in range(amount):
+            await PackInstance.create(player=player, pack=pack)
 
         await interaction.followup.send(
-            f"Successfully added {amount} {plural} to {user.name}.",
+            f"Successfully added {amount} pack{plural} to {user.name}.",
             ephemeral=True,
         )
         await log_action(
-            f"{interaction.user} added {amount} {plural} to {user.name}.",
+            f"{interaction.user} added {amount} pack{plural} to {user.name}.",
             interaction.client,
         )
 
     @app_commands.command(name="remove")
     @app_commands.checks.has_any_role(*settings.root_role_ids)
-    async def coins_remove(
+    async def packs_remove(
         self,
         interaction: discord.Interaction[BallsDexBot],
         user: discord.User,
+        pack: PackEnabledTransform,
         amount: int = 1,
     ):
         """
-        Remove an amount of coins from a user.
+        Remove an amount of packs from a user.
 
         Parameters
         ----------
         user: discord.User
-            The user you want to remove the coins from.
+            The user you want to remove the packs from.
+        pack: PackEnabledTransform
+            The pack you want to remove from the user.
         amount: int
-            The amount of coins you want to remove from the user.
+            The amount of packs you want to remove from the user.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
+        player, _ = await Player.get_or_create(discord_id=user.id)
+        packs = await PackInstance.filter(player=player, pack=pack, opened=False).count()
 
         if amount < 1:
             await interaction.followup.send(
@@ -82,20 +93,24 @@ class Coins(app_commands.Group):
             )
             return
 
-        player, _ = await Player.get_or_create(discord_id=user.id)
-        if amount > player.coins:
+        if amount > packs:
             await interaction.followup.send(
-                "You cannot remove more coins than the amount of coins the user currently has."
+                "You cannot remove more packs than the amount of packs the user currently has."
             )
             return
 
-        await player.remove_coins(amount)
+        packs_to_delete = await PackInstance.filter(player=player, pack=pack, opened=False).limit(
+            amount
+        )
+        for p in packs_to_delete:
+            await p.delete()
+
         plural = "" if amount == 1 else "s"
 
         await interaction.followup.send(
-            f"Successfully removed {amount} coin{plural} from {user.name}.", ephemeral=True
+            f"Successfully removed {amount} pack{plural} from {user.name}.", ephemeral=True
         )
         await log_action(
-            f"{interaction.user} removed {amount} coin{plural} from {user.name}.",
+            f"{interaction.user} removed {amount} pack{plural} from {user.name}.",
             interaction.client,
         )

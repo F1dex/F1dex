@@ -25,6 +25,7 @@ async def refresh_cache():
     """
     if not Tortoise._inited:
         await init_tortoise(os.environ["BALLSDEXBOT_DB_URL"], skip_migrations=True)
+
     balls.clear()
     for ball in await Ball.all():
         balls[ball.pk] = ball
