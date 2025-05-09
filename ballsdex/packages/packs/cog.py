@@ -8,36 +8,131 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button, View, button
 
-from ballsdex.core.models import Ball, BallInstance, PackInstance, Player, Special, balls
+from ballsdex.core.models import BallInstance, PackInstance, Player, Special
 from ballsdex.core.models import Packs as PackModel
 from ballsdex.core.utils.buttons import ConfirmChoiceView
 from ballsdex.core.utils.paginator import FieldPageSource, Pages
 from ballsdex.core.utils.transformers import PackEnabledTransform
+from ballsdex.core.utils.utils import decide_collectible
 from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
 
 
+
 def parse_rewards(rewards_str: str) -> dict:
-    rewards = {}
+    # TODO: add specify_collectibles to parsing with exact matching
+    rewards = {"special": []}
     lines = [line.strip() for line in rewards_str.splitlines() if line.strip()]
 
     for line in lines:
-        if match := re.match(r"special=(\w+)\((\d+)%\)", line):
+        if match := re.match(r"special=([\w\s]+)\((\d+)%\)", line):
             name, chance = match.groups()
-            rewards["special"] = {"type": name, "chance": int(chance)}
+            rewards["special"].append({"type": name.strip(), "chance": int(chance)})
         elif match := re.match(r"collectible_amount=(\d+)", line):
             rewards["collectible_amount"] = int(match.group(1))
+        elif match := re.match(r"currency_amount_choices=(\d+)\((\d+)%\)", line):
+            amount, chance = map(int, match.groups())
+            rewards.setdefault("currency_amount_choices", []).append(
+                {"amount": amount, "chance": chance}
+            )
+        elif match := re.match(r"currency_amount=(\d+)-(\d+)", line):
+            min_amt, max_amt = map(int, match.groups())
+            rewards["currency_amount"] = random.randint(min_amt, max_amt)
+        elif match := re.match(r"currency_amount=(\d+)", line):
+            rewards["currency_amount"] = int(match.group(1))
 
     return rewards
 
 
-def decide_collectible() -> Ball:
-    countryballs = list(filter(lambda m: m.enabled, balls.values()))
-    rarities = [x.rarity for x in countryballs]
-    cb = random.choices(population=countryballs, weights=rarities, k=1)[0]
-    return cb
+async def open_pack(
+    bot: "BallsDexBot",
+    interaction: discord.Interaction,
+    player: Player,
+    pack: PackModel,
+):
+    pack_instance = (
+        await PackInstance.filter(player=player, pack=pack).prefetch_related("pack").first()
+    )
+
+    if not pack_instance:
+        await interaction.followup.send("You don't own any packs!", ephemeral=True)
+        return
+
+    await pack_instance.delete()
+    parsed = parse_rewards(pack_instance.pack.rewards)
+    pack_updated_count = await PackInstance.filter(player=player, pack=pack).count()
+
+    reward_lines = []
+    special = parsed.get("special", [])
+    collectible_count = parsed.get("collectible_amount", 0)
+    reward_lines.append(
+        f"**You have packed {collectible_count} {settings.plural_collectible_name}!**\n"
+    )
+
+    for _ in range(collectible_count):
+        collectible = await decide_collectible(bot=bot)
+        applied_special: Special | None = None
+
+        if special:
+            divisor = len(special)
+            divide_by = 1.333 if divisor == 2 else 2
+
+            for sp in special:
+                roll = random.randint(1, 100)
+                if roll <= sp["chance"] / (divisor / divide_by):
+                    applied_special = await Special.get_or_none(name=sp["type"].strip())
+                    if applied_special:
+                        break
+
+        cb = await BallInstance.create(
+            player=player,
+            ball=collectible,
+            special=applied_special,
+            packed=True,
+            attack_bonus=random.randint(-settings.max_attack_bonus, settings.max_attack_bonus),
+            health_bonus=random.randint(-settings.max_health_bonus, settings.max_health_bonus),
+        )
+
+        cb_txt = (
+            cb.description(short=True, include_emoji=True, bot=bot)
+            + f" (`{cb.attack_bonus:+}%/{cb.health_bonus:+}%`)"
+        )
+        reward_lines.append(cb_txt)
+
+    currency_reward = 0
+    if "currency_amount_choices" in parsed:
+        choices = parsed["currency_amount_choices"]
+        if choices:
+            currency_reward = random.choices(
+                [c["amount"] for c in choices],
+                weights=[c["chance"] for c in choices],
+                k=1
+            )[0]
+    elif "currency_amount" in parsed:
+        currency_reward = parsed["currency_amount"]
+
+    player.coins += currency_reward
+    await player.save()
+
+    grammar = (
+        f"{settings.currency_name}"
+        if currency_reward == 1
+        else f"{settings.plural_currency_name}"
+    )
+
+    reward_lines.append(f"\n**+{currency_reward} {grammar} {settings.currency_emoji}**")
+
+    result_embed = discord.Embed(
+        title=f"🎉 {pack.name.title()} Pack Opened!",
+        description="\n".join(reward_lines),
+        color=discord.Color.gold(),
+    )
+    view = OpenMoreView(bot, interaction, player, pack)
+    result_embed.set_footer(text=f"You still have {pack_updated_count} {pack.name} packs left!")
+
+    await interaction.followup.send(embed=result_embed, view=view)
 
 
 class PackConfirmChoiceView(View):
@@ -79,22 +174,119 @@ class PackConfirmChoiceView(View):
         style=discord.ButtonStyle.success, emoji="\N{HEAVY CHECK MARK}\N{VARIATION SELECTOR-16}"
     )
     async def accept(self, interaction: discord.Interaction["BallsDexBot"], button: Button):
-        self.stop()
-        for item in self.children:
-            item.disabled = True  # type: ignore
-
         self.value = True
+
+        self.original_interaction = interaction
+        await interaction.response.defer()
+
+        self.stop()
 
     @button(
         style=discord.ButtonStyle.danger,
         emoji="\N{HEAVY MULTIPLICATION X}\N{VARIATION SELECTOR-16}",
     )
     async def deny(self, interaction: discord.Interaction["BallsDexBot"], button: Button):
-        self.stop()
+        self.value = False
+
+        self.original_interaction = interaction
+        await interaction.response.defer()
+
         for item in self.children:
             item.disabled = True  # type: ignore
 
+        try:
+            await self.original_interaction.followup.edit_message(
+                "@original",
+                view=self,  # type: ignore
+            )
+        except discord.NotFound:
+            pass
+
+        self.stop()
+
+
+class OpenMoreView(View):
+    def __init__(
+        self,
+        bot: "BallsDexBot",
+        interaction: discord.Interaction["BallsDexBot"],
+        player: Player,
+        pack: PackModel,
+    ):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.original_interaction = interaction
+        self.player = player
+        self.value = None
+        self.pack = pack
+
+    async def interaction_check(self, interaction: discord.Interaction["BallsDexBot"], /) -> bool:
+        if interaction.user.id != self.player.discord_id:
+            await interaction.response.send_message(
+                "You are not allowed to interact with this menu.", ephemeral=True
+            )
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True  # type: ignore
+
+        try:
+            await self.original_interaction.followup.edit_message(
+                "@original",
+                view=self,  # type: ignore
+            )
+        except discord.NotFound:
+            pass
+
         self.value = False
+
+    @button(style=discord.ButtonStyle.blurple, label="Open More")
+    async def open_more(self, interaction: discord.Interaction["BallsDexBot"], button: Button):
+        self.value = True
+
+        self.original_interaction = interaction
+        await interaction.response.defer()
+
+        await open_pack(self.bot, interaction, self.player, self.pack)
+
+        for item in self.children:
+            item.disabled = True  # type: ignore
+
+        try:
+            await self.original_interaction.followup.edit_message(
+                "@original",
+                view=self,  # type: ignore
+            )
+        except discord.NotFound:
+            pass
+
+        self.stop()
+
+    @button(
+        style=discord.ButtonStyle.danger,
+        emoji="\N{HEAVY MULTIPLICATION X}\N{VARIATION SELECTOR-16}",
+        label="Return"
+    )
+    async def return_home(self, interaction: discord.Interaction["BallsDexBot"], button: Button):
+        self.value = False
+
+        self.original_interaction = interaction
+        await interaction.response.defer()
+
+        for item in self.children:
+            item.disabled = True  # type: ignore
+
+        try:
+            await self.original_interaction.followup.edit_message(
+                "@original",
+                view=self,  # type: ignore
+            )
+        except discord.NotFound:
+            pass
+
+        self.stop()
 
 
 class Packs(commands.GroupCog):
@@ -265,59 +457,43 @@ class Packs(commands.GroupCog):
             The pack to open.
         """
         player = await Player.get(discord_id=interaction.user.id)
-        pack_instance = (
-            await PackInstance.filter(player=player, pack=pack).prefetch_related("pack").first()
-        )
-        await interaction.response.defer(thinking=True)
+        pack_count = await PackInstance.filter(player=player, pack=pack).count()
 
-        if not pack_instance:
-            await interaction.followup.send("You don't own any packs!", ephemeral=True)
+        if pack_count < 1:
+            await interaction.response.send_message(
+                f"You don't own any **{pack.name}** packs!", ephemeral=True
+            )
             return
+
+        await interaction.response.defer(thinking=True)
 
         view = PackConfirmChoiceView(interaction.client, interaction, player)
         embed = discord.Embed(
             title="🎁 Open Pack?",
-            description=f"Do you want to open **{pack_instance.pack.name}** packs?",
+            description=(
+                f"Do you want to open a **{pack.name}** pack?\n"
+                f"You currently have **{pack_count}** of them."
+            ),
             color=discord.Color.blue(),
         )
         await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-
         await view.wait()
+
         if not view.value:
             return
 
-        await pack_instance.delete()
-        parsed = parse_rewards(pack_instance.pack.rewards)
+        await open_pack(self.bot, interaction, player, pack)
 
-        reward_lines = []
-        special = parsed.get("special")
-        collectible_count = parsed.get("collectible_amount", 0)
+        for item in view.children:
+            item.disabled = True  # type: ignore
 
-        for i in range(collectible_count):
-            collectible = await decide_collectible()
-
-            applied_special: Special | None = None
-            if special:
-                roll = random.randint(1, 100)
-                if roll <= special["chance"]:
-                    applied_special = await Special.get(name=special["type"])
-
-            await BallInstance.create(
-                player=player,
-                ball=collectible,
-                special=applied_special,
-                packed=True,
+        try:
+            await view.original_interaction.followup.edit_message(
+                "@original",
+                view=view,  # type: ignore
             )
-
-            name_display = f"{applied_special.name} " if applied_special else ""
-            emoji_display = f"<:{collectible.emoji_id}> " if collectible.emoji_id else ""
-            reward_lines.append(f"{emoji_display}{name_display}**{collectible.country}**")
-
-        result_embed = discord.Embed(
-            title=f"🎉 {pack_instance.pack.name.title()} Opened!",
-            description="\n".join(reward_lines),
-            color=discord.Color.gold(),
-        )
-        await interaction.followup.send(embed=result_embed)
-        # fix display, make it better
-        # fix specials
+        except discord.NotFound:
+            pass
+        # add packs to admin panel
+        # add pack give, pack trade add
+        # add admin pack give, admin pack remove

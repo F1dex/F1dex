@@ -1,8 +1,9 @@
+import random
 from typing import TYPE_CHECKING, Union
 
 import discord
 
-from ballsdex.core.models import Player, PrivacyPolicy
+from ballsdex.core.models import Ball, Player, PrivacyPolicy, balls
 from ballsdex.settings import settings
 
 if TYPE_CHECKING:
@@ -17,6 +18,16 @@ def is_staff(interaction: discord.Interaction["BallsDexBot"]) -> bool:
         if any(role.id in roles for role in interaction.user.roles):  # type: ignore
             return True
     return False
+
+
+def decide_collectible(bot: "BallsDexBot", cls: type | None = None) -> Ball:
+    countryballs = list(filter(lambda m: m.enabled, balls.values()))
+    rarities = [x.rarity for x in countryballs]
+    cb = random.choices(population=countryballs, weights=rarities, k=1)[0]
+    if cls:
+        return cls(cb, bot)
+    else:
+        return cb
 
 
 async def inventory_privacy(

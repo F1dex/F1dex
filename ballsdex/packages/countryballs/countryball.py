@@ -23,6 +23,7 @@ from ballsdex.core.models import (
     balls,
     specials,
 )
+from ballsdex.core.utils.utils import decide_collectible
 from ballsdex.settings import settings
 
 if TYPE_CHECKING:
@@ -202,12 +203,7 @@ class BallSpawnView(View):
         """
         Get a new instance with a random countryball. Rarity values are taken into account.
         """
-        countryballs = list(filter(lambda m: m.enabled, balls.values()))
-        if not countryballs:
-            raise RuntimeError("No ball to spawn")
-        rarities = [x.rarity for x in countryballs]
-        cb = random.choices(population=countryballs, weights=rarities, k=1)[0]
-        return cls(bot, cb)
+        return decide_collectible(bot, cls=cls)
 
     @property
     def name(self):
@@ -445,10 +441,7 @@ class BallSpawnView(View):
             + " "
         )
 
-        return (
-            caught_message
-            + (
-                f"`(#{ball.pk:0X}, {ball.attack_bonus:+}%/{ball.health_bonus:+}%)`"
-                f"**(+{amount_from_rarity(ball.ball.rarity)} {settings.currency_emoji}\n\n{text}"
-            )
+        return caught_message + (
+            f"`(#{ball.pk:0X}, {ball.attack_bonus:+}%/{ball.health_bonus:+}%)`"
+            f"**(+{amount_from_rarity(ball.ball.rarity)} {settings.currency_emoji}\n\n{text}"
         )
