@@ -489,5 +489,63 @@ class Packs(commands.GroupCog):
             )
         except discord.NotFound:
             pass
-        # add pack give, pack trade add
-        # add admin pack give, admin pack remove
+
+    @app_commands.command()
+    async def give(
+        self,
+        interaction: discord.Interaction,
+        user: discord.User,
+        pack: PackEnabledTransform,
+        amount: int | None = None,
+    ):
+        """
+        Give a pack to another user.
+
+        Parameters
+        ----------
+        user: discord.User
+            The user to give the pack to.
+        pack: PackEnabledTransform
+            The pack to give.
+        amount: int | None
+            The amount of packs to give. Defaults to 1.
+        """
+        player = await Player.get(discord_id=interaction.user.id)
+        target_player = await Player.get(discord_id=user.id)
+        pack_count = await PackInstance.filter(player=player, pack=pack, opened=False).count()
+
+        if pack_count < 1:
+            await interaction.response.send_message(
+                f"You don't own any **{pack.name}** packs!", ephemeral=True
+            )
+            return
+
+        if amount is None:
+            amount = 1
+
+        if amount > pack_count:
+            await interaction.response.send_message(
+                f"You don't own that many **{pack.name}** packs!", ephemeral=True
+            )
+            return
+
+        if amount <= 0:
+            await interaction.response.send_message(
+                "You can't give a negative amount of packs!", ephemeral=True
+            )
+            return
+
+        await interaction.response.defer(thinking=True)
+
+        for i in range(amount):
+            pack_instance = await PackInstance.filter(
+                player=player, pack=pack, opened=False
+            ).first()
+            if pack_instance:
+                pack_instance.player = target_player
+                await pack_instance.save()
+
+        grammar = "" if amount == 1 else "s"
+        await interaction.followup.send(
+            f"You just gave {amount}x **{pack.name}** pack{grammar} to {user.mention}!"
+        )

@@ -388,6 +388,39 @@ class BlacklistHistory(models.Model):
         verbose_name_plural = "blacklisthistories"
 
 
+class Packs(models.Model):
+    name = models.CharField(max_length=64)
+    description = models.TextField(max_length=2000)
+    price = models.PositiveIntegerField(default=0, help_text="Price in coins")
+    rewards = models.TextField(max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    purchasable = models.BooleanField(help_text="Whether this pack can be purchased", default=True)
+
+    def __str__(self):
+        return f"Pack #{self.pk}: {self.name}"
+
+    class Meta:
+        db_table = "packs"
+        verbose_name = "Pack"
+        verbose_name_plural = "Packs"
+        managed = True
+
+
+class PackInstance(models.Model):
+    player = models.ForeignKey("Player", on_delete=models.CASCADE, related_name="pack_instances")
+    pack = models.ForeignKey("Packs", on_delete=models.CASCADE, related_name="instances")
+    opened = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Pack instance #{self.pk} for {self.player}"
+
+    class Meta:
+        db_table = "packinstance"
+        verbose_name = "Pack Instance"
+        verbose_name_plural = "Pack Instances"
+        managed = True
+
+
 class Trade(models.Model):
     date = models.DateTimeField(auto_now_add=True, editable=False)
     player1 = models.ForeignKey(Player, on_delete=models.CASCADE)
@@ -469,36 +502,3 @@ class BattleObject(models.Model):
     class Meta:
         managed = True
         db_table = "battleobject"
-
-
-class Packs(models.Model):
-    name = models.CharField(max_length=64)
-    description = models.TextField(max_length=2000)
-    price = models.PositiveIntegerField(default=0, help_text="Price in coins")
-    rewards = models.TextField(max_length=1000)
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    purchasable = models.BooleanField(help_text="Whether this pack can be purchased", default=True)
-
-    def __str__(self):
-        return f"Pack #{self.pk}: {self.name}"
-
-    class Meta:
-        db_table = "packs"
-        verbose_name = "Pack"
-        verbose_name_plural = "Packs"
-        managed = True
-
-
-class PackInstance(models.Model):
-    player = models.ForeignKey("Player", on_delete=models.CASCADE, related_name="pack_instances")
-    pack = models.ForeignKey("Pack", on_delete=models.CASCADE, related_name="instances")
-    opened = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"Pack instance #{self.pk} for {self.player}"
-
-    class Meta:
-        db_table = "packinstance"
-        verbose_name = "Pack Instance"
-        verbose_name_plural = "Pack Instances"
-        managed = True
