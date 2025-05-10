@@ -405,7 +405,7 @@ class Packs(models.Model):
     name = models.CharField(max_length=64)
     description = models.TextField(max_length=2000)
     price = models.PositiveIntegerField(default=0, help_text="Price in points")
-    rewards = models.TextField(max_length=1000)
+    rewards = models.TextField(max_length=10000)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     purchasable = models.BooleanField(help_text="Whether this pack can be purchased", default=True)
 
