@@ -54,11 +54,11 @@ class Packs(app_commands.Group):
             await PackInstance.create(player=player, pack=pack)
 
         await interaction.followup.send(
-            f"Successfully added {amount} pack{plural} to {user.name}.",
+            f"Successfully added {amount} '{pack.name}' pack{plural} to {user.name}.",
             ephemeral=True,
         )
         await log_action(
-            f"{interaction.user} added {amount} pack{plural} to {user.name}.",
+            f"{interaction.user} added {amount} '{pack.name}' pack{plural} to {user.name}.",
             interaction.client,
         )
 
@@ -68,7 +68,7 @@ class Packs(app_commands.Group):
         self,
         interaction: discord.Interaction[BallsDexBot],
         user: discord.User,
-        pack: PackEnabledTransform,
+        pack: PackTransform,
         amount: int = 1,
     ):
         """
@@ -78,7 +78,7 @@ class Packs(app_commands.Group):
         ----------
         user: discord.User
             The user you want to remove the packs from.
-        pack: PackEnabledTransform
+        pack: PackTransform
             The pack you want to remove from the user.
         amount: int
             The amount of packs you want to remove from the user.
@@ -108,9 +108,10 @@ class Packs(app_commands.Group):
         plural = "" if amount == 1 else "s"
 
         await interaction.followup.send(
-            f"Successfully removed {amount} pack{plural} from {user.name}.", ephemeral=True
+            f"Successfully removed {amount} '{pack.name}' pack{plural} from {user.name}.",
+            ephemeral=True,
         )
         await log_action(
-            f"{interaction.user} removed {amount} pack{plural} from {user.name}.",
+            f"{interaction.user} removed {amount} '{pack.name}' pack{plural} from {user.name}.",
             interaction.client,
         )
