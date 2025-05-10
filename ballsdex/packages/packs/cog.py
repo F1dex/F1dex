@@ -48,10 +48,10 @@ def parse_rewards(rewards_str: str) -> dict:
         elif match := re.match(r"currency_amount=(\d+)", line):
             rewards["currency_amount"] = int(match.group(1))
 
-        elif match := re.match(r"specify_collectibles=(.+)", line):
-            collectibles_str = match.group(1)
-            collectibles = [name.strip() for name in re.split(r",\s*", collectibles_str)]
-            rewards["specify_collectibles"] = collectibles
+        elif match := re.match(r'specify_collectibles=(.+)', line, re.IGNORECASE):
+            names_str = match.group(1)
+            names = re.findall(r'"([^"]+)"', names_str)
+            rewards["specify_collectibles"] = [name.strip() for name in names if name.strip()]
 
     return rewards
 
@@ -61,6 +61,7 @@ async def open_pack(
     interaction: discord.Interaction,
     player: Player,
     pack: PackModel,
+    ephemeral: bool = False,
 ):
     pack_instance = (
         await PackInstance.filter(player=player, pack=pack).prefetch_related("pack").first()
@@ -78,13 +79,13 @@ async def open_pack(
     special = parsed.get("special", [])
     collectible_count = parsed.get("collectible_amount", 0)
     specify_names = parsed.get("specify_collectibles", [])
-    available_specified = []
+    available_specified: list[Ball] = []
     reward_lines.append(
         f"**You have packed {collectible_count} {settings.plural_collectible_name}!**\n"
     )
 
     for name in specify_names:
-        collectible = await Ball.filter(name__iexact=name).first()
+        collectible = await Ball.filter(country__iexact=name).first()
         if collectible:
             available_specified.append(collectible)
         else:
@@ -96,7 +97,8 @@ async def open_pack(
 
     for _ in range(collectible_count):
         if available_specified:
-            collectible = random.choice(available_specified)
+            rarities = [ball.rarity for ball in available_specified]
+            collectible = random.choices(population=available_specified, weights=rarities, k=1)[0]
         else:
             collectible = decide_collectible()
 
@@ -161,7 +163,7 @@ async def open_pack(
             text=f"You still have {pack_updated_count} {pack.name} packs left!"
         )
 
-    await interaction.followup.send(embed=result_embed, view=view, ephemeral=True)
+    await interaction.followup.send(embed=result_embed, view=view, ephemeral=ephemeral)
 
 
 class PackConfirmChoiceView(View):
@@ -176,6 +178,7 @@ class PackConfirmChoiceView(View):
         self.original_interaction = interaction
         self.player = player
         self.value = None
+        self.ephemeral: bool = False
 
     async def interaction_check(self, interaction: discord.Interaction["BallsDexBot"], /) -> bool:
         if interaction.user.id != self.player.discord_id:
@@ -248,6 +251,7 @@ class OpenMoreView(View):
         self.player = player
         self.value = None
         self.pack = pack
+        self.confirmview = PackConfirmChoiceView(self.bot, self.original_interaction, self.player)
 
     async def interaction_check(self, interaction: discord.Interaction["BallsDexBot"], /) -> bool:
         if interaction.user.id != self.player.discord_id:
@@ -278,7 +282,7 @@ class OpenMoreView(View):
         self.original_interaction = interaction
         await interaction.response.defer()
 
-        await open_pack(self.bot, interaction, self.player, self.pack)
+        await open_pack(self.bot, interaction, self.player, self.pack, self.confirmview.ephemeral)
 
         for item in self.children:
             item.disabled = True  # type: ignore
@@ -374,26 +378,19 @@ class Packs(commands.GroupCog):
         """
         pack_to_buy = await PackModel.get(name=pack.name)
         player = await Player.get(discord_id=interaction.user.id)
-        await interaction.response.defer(thinking=True, ephemeral=True)
-
-        if not pack_to_buy:
-            await interaction.followup.send("Pack not found.", ephemeral=True)
-            return
-
-        if not pack_to_buy.purchasable:
-            await interaction.followup.send("This pack is not purchasable.", ephemeral=True)
-            return
 
         total_price = pack_to_buy.price * amount
         gram = "" if amount == 1 else "s"
         if player.coins < total_price:
             coins_needed = total_price - player.coins
-            await interaction.followup.send(
+            await interaction.response.send_message(
                 f"You don't have enough coins to buy {amount} pack{gram}, "
                 f"you need {coins_needed} more coins.",
                 ephemeral=True,
             )
             return
+
+        await interaction.response.defer(thinking=True)
 
         view = ConfirmChoiceView(
             interaction,
@@ -409,7 +406,6 @@ class Packs(commands.GroupCog):
             f"Are you sure you want to buy **{amount}x {pack_to_buy.name} pack{gram}** for "
             f"**{total_price} {grammar} {settings.currency_emoji}**?",
             view=view,
-            ephemeral=True,
         )
         await view.wait()
         if not view.value:
@@ -423,7 +419,6 @@ class Packs(commands.GroupCog):
 
         await interaction.followup.send(
             f"You have successfully bought **{amount}x {pack_to_buy.name} pack{gram}**!",
-            ephemeral=True,
         )
 
     @app_commands.command()
@@ -457,7 +452,9 @@ class Packs(commands.GroupCog):
         for pack in owned_packs:
             packs[pack.pack.name] += 1
 
-        for pack_name, count in sorted(packs.items(), key=lambda x: x[1], reverse=True):
+        sorted_packs = sorted(packs.items(), key=lambda x: x[1], reverse=True)
+
+        for pack_name, count in sorted_packs:
             pack = await PackModel.get(name=pack_name)
 
             grammar = (
@@ -472,11 +469,40 @@ class Packs(commands.GroupCog):
                 inline=False,
             )
 
-        embed.set_footer(text="Use /buy to get more packs!")
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        entries: list[tuple[str, str]] = []
+
+        for pack_name, count in sorted_packs:
+            pack = await PackModel.get(name=pack_name)
+
+            grammar = (
+                f"{settings.currency_name}"
+                if pack.price == 1
+                else f"{settings.plural_currency_name}"
+            )
+
+            entries.append(
+                (
+                    "",
+                    f"{pack.name} ({count} owned)\n"
+                    f"Value of each pack: **{pack.price} {grammar} {settings.currency_emoji}**",
+                )
+            )
+
+        source = FieldPageSource(entries, per_page=5, inline=False)
+        source.embed.title = "Pack inventory"
+        source.embed.set_thumbnail(url=self.bot.user.display_avatar.url)
+        source.embed.set_footer(text="To buy a pack, use /pack buy")
+
+        pages = Pages(source=source, interaction=interaction, compact=True)
+        await pages.start(ephemeral=True)
 
     @app_commands.command()
-    async def open(self, interaction: discord.Interaction, pack: PackEnabledTransform):
+    async def open(
+        self,
+        interaction: discord.Interaction,
+        pack: PackEnabledTransform,
+        ephemeral: bool | None = None
+    ):
         """
         Open a pack you own.
 
@@ -484,9 +510,13 @@ class Packs(commands.GroupCog):
         ----------
         pack: PackEnabledTransform
             The pack to open.
+        ephemeral: bool | None
+            Whether the command will be ephemeral or not, not ephemeral by default.
         """
         player = await Player.get(discord_id=interaction.user.id)
         pack_count = await PackInstance.filter(player=player, pack=pack).count()
+        if not ephemeral:
+            ephemeral = False
 
         if pack_count < 1:
             await interaction.response.send_message(
@@ -494,9 +524,11 @@ class Packs(commands.GroupCog):
             )
             return
 
-        await interaction.response.defer(thinking=True, ephemeral=True)
+        await interaction.response.defer(thinking=True, ephemeral=ephemeral)
 
         view = PackConfirmChoiceView(interaction.client, interaction, player)
+        view.ephemeral = ephemeral
+
         embed = discord.Embed(
             title="🎁 Open Pack?",
             description=(
@@ -505,13 +537,13 @@ class Packs(commands.GroupCog):
             ),
             color=discord.Color.blue(),
         )
-        await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-        await view.wait()
+        await interaction.followup.send(embed=embed, view=view, ephemeral=ephemeral)
 
+        await view.wait()
         if not view.value:
             return
 
-        await open_pack(self.bot, interaction, player, pack)
+        await open_pack(self.bot, interaction, player, pack, ephemeral)
 
         for item in view.children:
             item.disabled = True  # type: ignore
