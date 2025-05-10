@@ -321,7 +321,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         bot_countryballs = {
             x: y.emoji_id
             for x, y in balls.items()
-            if y.enabled
+            if (season is not None or y.enabled)
             and (season is None or y.season == season.value)
             and (not special or special.end_date is None or y.created_at < special.end_date)
         }
@@ -381,12 +381,16 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                     entries.append((f"__**{title}**__", buffer))
 
         if owned_countryballs:
-            fill_fields(
-                f"Owned {settings.plural_collectible_name}",
-                set(bot_countryballs[x] for x in owned_countryballs),
-            )
-        else:
-            entries.append((f"__**Owned {settings.plural_collectible_name}**__", "Nothing yet."))
+            valid_owned = owned_countryballs & bot_countryballs.keys()
+            if valid_owned:
+                fill_fields(
+                    f"Owned {settings.plural_collectible_name}",
+                    set(bot_countryballs[x] for x in valid_owned),
+                )
+            else:
+                entries.append(
+                    (f"__**Owned {settings.plural_collectible_name}**__", "Nothing yet.")
+                )
 
         if missing := set(y for x, y in bot_countryballs.items() if x not in owned_countryballs):
             fill_fields(f"Missing {settings.plural_collectible_name}", missing)
