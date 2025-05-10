@@ -235,12 +235,12 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         if len(countryballs) < 1:
             if user_obj == interaction.user:
                 await interaction.followup.send(
-                    f"You don't have any {season_str} {combined} "
+                    f"You don't have any {season_str}{combined} "
                     f"{settings.plural_collectible_name} yet."
                 )
             else:
                 await interaction.followup.send(
-                    f"{user_obj.name} doesn't have any {season_str} {combined} "
+                    f"{user_obj.name} doesn't have any {season_str}{combined} "
                     f"{settings.plural_collectible_name} yet."
                 )
             return
@@ -252,14 +252,14 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         if user_obj == interaction.user:
             await paginator.start(
                 content=(
-                    f"Viewing your {season_str} {combined} {settings.plural_collectible_name}"
+                    f"Viewing your {season_str}{combined} {settings.plural_collectible_name}"
                 )
             )
         else:
             await paginator.start(
                 content=(
                     f"Viewing {user_obj.name}'s {season_str} "
-                    f"{combined} {settings.plural_collectible_name}"
+                    f"{combined}{settings.plural_collectible_name}"
                 )
             )
 
@@ -320,7 +320,11 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         bot_countryballs = {x: y.emoji_id for x, y in balls.items() if y.enabled}
 
-        filters = {"player__discord_id": user_obj.id, "ball__enabled": True}
+        filters = {"player__discord_id": user_obj.id}
+
+        if season is None:
+            filters["ball__enabled"] = True
+
         if special:
             filters["special"] = special
             bot_countryballs = {
