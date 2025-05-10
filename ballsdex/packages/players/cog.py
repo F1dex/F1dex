@@ -1,3 +1,4 @@
+import logging
 import zipfile
 from io import BytesIO
 from typing import TYPE_CHECKING, Optional
@@ -36,6 +37,8 @@ from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
+
+log = logging.getLogger("ballsdex.packages.players")
 
 
 class Player(commands.GroupCog):

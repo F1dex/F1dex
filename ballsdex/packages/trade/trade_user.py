@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -8,6 +9,8 @@ from ballsdex.core.models import BlacklistedID
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
     from ballsdex.core.models import BallInstance, Player, Trade
+
+log = logging.getLogger("ballsdex.packages.trade")
 
 
 @dataclass(slots=True)

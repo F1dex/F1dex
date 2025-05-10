@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, Literal
 
 from ballsdex.packages.countryballs.spawn import BaseSpawnManager
@@ -6,6 +7,8 @@ if TYPE_CHECKING:
     import discord
 
     from ballsdex.core.bot import BallsDexBot
+
+log = logging.getLogger("ballsdex.packages.countryballs")
 
 # It is a good idea to call importlib.reload on your custom module to make "b.reload countryballs"
 # also reload the spawn manager. Otherwise, you'll be forced to fully restart to apply changes

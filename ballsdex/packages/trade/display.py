@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, Iterable
 
 import discord
@@ -10,6 +11,8 @@ from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
+
+log = logging.getLogger("ballsdex.packages.trade")
 
 
 class TradeViewFormat(menus.ListPageSource):

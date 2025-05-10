@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
     from ballsdex.packages.trade.cog import Trade as TradeCog
 
-log = logging.getLogger("ballsdex.packages.trade.menu")
+log = logging.getLogger("ballsdex.packages.trade")
 
 
 class InvalidTradeOperation(Exception):
