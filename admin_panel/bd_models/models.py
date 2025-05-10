@@ -73,6 +73,7 @@ class BallSeasons(models.IntegerChoices):
     F12024 = 1, "F1 2024"
     CHAMPS = 2, "Champions"
     F12025 = 3, "F1 2025"
+    LIMITED = 4, "Limited"
 
 
 class Player(models.Model):

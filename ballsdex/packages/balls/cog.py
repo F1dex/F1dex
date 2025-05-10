@@ -136,6 +136,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             app_commands.Choice(name="F1 2024", value=BallSeasons.F12024),
             app_commands.Choice(name="Champions", value=BallSeasons.CHAMPS),
             app_commands.Choice(name="F1 2025", value=BallSeasons.F12025),
+            app_commands.Choice(name="Limited", value=BallSeasons.LIMITED),
         ]
     )
     @app_commands.command()
@@ -218,6 +219,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             "F12024": "F1 2024",
             "CHAMPS": "Champions",
             "F12025": "F1 2025",
+            "LIMITED": "Limited",
         }
         season_str = f" ({season_mapping.get(season.name, season.name)})" if season else ""
         ball_txt = countryball.country if countryball else ""
@@ -268,6 +270,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             app_commands.Choice(name="F1 2024", value=BallSeasons.F12024),
             app_commands.Choice(name="Champions", value=BallSeasons.CHAMPS),
             app_commands.Choice(name="F1 2025", value=BallSeasons.F12025),
+            app_commands.Choice(name="Limited", value=BallSeasons.LIMITED),
         ]
     )
     @app_commands.command()
@@ -407,6 +410,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             "F12024": "F1 2024",
             "CHAMPS": "Champions",
             "F12025": "F1 2025",
+            "LIMITED": "Limited",
         }
 
         source = FieldPageSource(entries, per_page=5, inline=False, clear_description=False)

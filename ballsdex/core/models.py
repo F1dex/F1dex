@@ -126,6 +126,7 @@ class BallSeasons(IntEnum):
     F12024 = 1
     CHAMPS = 2
     F12025 = 3
+    LIMITED = 4
 
 
 class Ball(models.Model):
