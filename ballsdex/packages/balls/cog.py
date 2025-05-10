@@ -332,7 +332,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         if season is not None:
             filters["ball__season"] = season
             bot_countryballs = {
-                x: y.emoji_id for x, y in balls.items() if y.enabled and (y.season == season.value)
+                x: y.emoji_id for x, y in balls.items() if y.season == season.value
             }
 
         if not bot_countryballs:
