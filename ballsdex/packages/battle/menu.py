@@ -321,6 +321,7 @@ class BattleMenu:
         async def apply_special_buff(ball: BallInstance):
             atk, hp = ball.attack, ball.health
             if ball.special:
+                await ball.fetch_related("special")
                 special = await Special.get(name=ball.special.name)
                 for buff, ids in SPECIAL_BUFFS:
                     if special.pk in ids:
