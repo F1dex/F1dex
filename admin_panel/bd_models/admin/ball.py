@@ -98,6 +98,7 @@ class BallAdmin(admin.ModelAdmin):
                     "emoji_id",
                     "economy",
                     "regime",
+                    "season",
                 ],
             },
         ),
@@ -148,6 +149,7 @@ class BallAdmin(admin.ModelAdmin):
         "health",
         "attack",
         "enabled",
+        "season",
     ]
     list_editable = ["enabled", "rarity"]
     list_filter = ["enabled", "tradeable", "regime", "economy", "created_at"]

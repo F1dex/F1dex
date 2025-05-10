@@ -12,6 +12,7 @@ from tortoise.functions import Count
 
 from ballsdex.core.models import (
     BallInstance,
+    BallSeasons,
     DonationPolicy,
     Player,
     Special,
@@ -235,6 +236,13 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 content=f"Viewing {user_obj.name}'s {settings.plural_collectible_name}"
             )
 
+    @app_commands.choices(
+        season=[
+            app_commands.Choice(name="F1 2024", value=BallSeasons.F12024),
+            app_commands.Choice(name="Champions", value=BallSeasons.CHAMPS),
+            app_commands.Choice(name="F1 2025", value=BallSeasons.F12025),
+        ]
+    )
     @app_commands.command()
     @app_commands.checks.cooldown(1, 60, key=lambda i: i.user.id)
     async def completion(
@@ -242,6 +250,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         interaction: discord.Interaction["BallsDexBot"],
         user: discord.User | None = None,
         special: SpecialEnabledTransform | None = None,
+        season: BallSeasons | None = None,
     ):
         """
         Show your current completion of the BallsDex.
@@ -252,10 +261,13 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             The user whose completion you want to view, if not yours.
         special: Special
             The special you want to see the completion of
+        season: BallSeasons | None
+            The season to filter by, shows every season if none.
         """
         user_obj = user or interaction.user
         await interaction.response.defer(thinking=True)
         extra_text = f"{special.name} " if special else ""
+
         if user is not None:
             try:
                 player = await Player.get(discord_id=user_obj.id)
@@ -278,11 +290,9 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
             if await inventory_privacy(self.bot, interaction, player, user_obj) is False:
                 return
-        # Filter disabled balls, they do not count towards progression
-        # Only ID and emoji is interesting for us
+
         bot_countryballs = {x: y.emoji_id for x, y in balls.items() if y.enabled}
 
-        # Set of ball IDs owned by the player
         filters = {"player__discord_id": user_obj.id, "ball__enabled": True}
         if special:
             filters["special"] = special
@@ -291,6 +301,13 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 for x, y in balls.items()
                 if y.enabled and (special.end_date is None or y.created_at < special.end_date)
             }
+
+        if season is not None:
+            filters["ball__season"] = season
+            bot_countryballs = {
+                x: y.emoji_id for x, y in balls.items() if y.enabled and (y.season == season.value)
+            }
+
         if not bot_countryballs:
             await interaction.followup.send(
                 f"There are no {extra_text}{settings.plural_collectible_name}"
@@ -309,7 +326,6 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         entries: list[tuple[str, str]] = []
 
         def fill_fields(title: str, emoji_ids: set[int]):
-            # check if we need to add "(continued)" to the field name
             first_field_added = False
             buffer = ""
 
@@ -329,14 +345,13 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                     buffer = ""
                 buffer += text
 
-            if buffer:  # add what's remaining
+            if buffer:
                 if first_field_added:
                     entries.append(("\u200b", buffer))
                 else:
                     entries.append((f"__**{title}**__", buffer))
 
         if owned_countryballs:
-            # Getting the list of emoji IDs from the IDs of the owned countryballs
             fill_fields(
                 f"Owned {settings.plural_collectible_name}",
                 set(bot_countryballs[x] for x in owned_countryballs),
@@ -353,12 +368,20 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                     "congratulations! :tada:**__",
                     "\u200b",
                 )
-            )  # force empty field value
+            )
+
+        season_mapping = {
+            "F12024": "F1 2024",
+            "CHAMPS": "Champions",
+            "F12025": "F1 2025",
+        }
 
         source = FieldPageSource(entries, per_page=5, inline=False, clear_description=False)
         special_str = f" ({special.name})" if special else ""
+        season_str = f" ({season_mapping.get(season.name, season.name)})" if season else ""
+
         source.embed.description = (
-            f"{settings.bot_name}{special_str} progression: "
+            f"{settings.bot_name}{special_str}{season_str} progression: "
             f"**{round(len(owned_countryballs) / len(bot_countryballs) * 100, 1)}%**"
         )
         source.embed.colour = discord.Colour.blurple()

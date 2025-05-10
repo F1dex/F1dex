@@ -48,7 +48,7 @@ def parse_rewards(rewards_str: str) -> dict:
         elif match := re.match(r"currency_amount=(\d+)", line):
             rewards["currency_amount"] = int(match.group(1))
 
-        elif match := re.match(r'specify_collectibles=(.+)', line, re.IGNORECASE):
+        elif match := re.match(r"specify_collectibles=(.+)", line, re.IGNORECASE):
             names_str = match.group(1)
             names = re.findall(r'"([^"]+)"', names_str)
             rewards["specify_collectibles"] = [name.strip() for name in names if name.strip()]
@@ -111,7 +111,7 @@ async def open_pack(
             selected_type = random.choices(
                 population=[sp["type"].strip() for sp in special],
                 weights=[sp["chance"] for sp in special],
-                k=1
+                k=1,
             )[0]
 
             applied_special = await Special.get(name=selected_type)
@@ -501,7 +501,7 @@ class Packs(commands.GroupCog):
         self,
         interaction: discord.Interaction,
         pack: PackEnabledTransform,
-        ephemeral: bool | None = None
+        ephemeral: bool | None = None,
     ):
         """
         Open a pack you own.
