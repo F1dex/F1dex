@@ -20,14 +20,15 @@ def is_staff(interaction: discord.Interaction["BallsDexBot"]) -> bool:
     return False
 
 
-def decide_collectible(bot: "BallsDexBot", cls: type | None = None) -> Ball:
+def decide_collectible() -> Ball:
     countryballs = list(filter(lambda m: m.enabled, balls.values()))
+
+    if not countryballs:
+        raise RuntimeError(f"No {settings.collectible_name} found")
+
     rarities = [x.rarity for x in countryballs]
     cb = random.choices(population=countryballs, weights=rarities, k=1)[0]
-    if cls:
-        return cls(cb, bot)
-    else:
-        return cb
+    return cb
 
 
 async def inventory_privacy(

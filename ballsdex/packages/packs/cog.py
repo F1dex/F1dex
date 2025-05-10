@@ -71,7 +71,7 @@ async def open_pack(
     )
 
     for _ in range(collectible_count):
-        collectible = await decide_collectible(bot=bot)
+        collectible = await decide_collectible()
         applied_special: Special | None = None
 
         total_chance = sum(sp["chance"] for sp in special)
