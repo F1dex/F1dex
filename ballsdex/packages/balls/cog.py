@@ -131,6 +131,13 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
     def __init__(self, bot: "BallsDexBot"):
         self.bot = bot
 
+    @app_commands.choices(
+        season=[
+            app_commands.Choice(name="F1 2024", value=BallSeasons.F12024),
+            app_commands.Choice(name="Champions", value=BallSeasons.CHAMPS),
+            app_commands.Choice(name="F1 2025", value=BallSeasons.F12025),
+        ]
+    )
     @app_commands.command()
     @app_commands.checks.cooldown(1, 10, key=lambda i: i.user.id)
     async def list(
@@ -142,6 +149,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         countryball: BallEnabledTransform | None = None,
         special: SpecialEnabledTransform | None = None,
         filter: FilteringChoices | None = None,
+        season: BallSeasons | None = None,
     ):
         """
         List your countryballs.
@@ -160,6 +168,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             Filter the list by a specific special event.
         filter: FilteringChoices
             Filter the list by a specific filter.
+        season: BallSeasons | None
+            The season to filter by, shows every season if none.
         """
         user_obj = user or interaction.user
         await interaction.response.defer(thinking=True)
@@ -197,43 +207,61 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             query = query.filter(ball__id=countryball.pk)
         if special:
             query = query.filter(special=special)
+        if season:
+            query = query.filter(ball__season=season)
         if sort:
             countryballs = await sort_balls(sort, query)
         else:
             countryballs = await query.order_by("-favorite")
 
-        if len(countryballs) < 1:
-            ball_txt = countryball.country if countryball else ""
-            special_txt = special if special else ""
+        season_mapping = {
+            "F12024": "F1 2024",
+            "CHAMPS": "Champions",
+            "F12025": "F1 2025",
+        }
+        season_str = f" ({season_mapping.get(season.name, season.name)})" if season else ""
+        ball_txt = countryball.country if countryball else ""
+        special_txt = special if special else ""
 
-            if special_txt and ball_txt:
-                combined = f"{special_txt} {ball_txt}"
-            elif special_txt:
-                combined = special_txt
-            elif ball_txt:
-                combined = ball_txt
-            else:
-                combined = ""
+        if special_txt and ball_txt:
+            combined = f"{special_txt} {ball_txt}"
+        elif special_txt:
+            combined = special_txt
+        elif ball_txt:
+            combined = ball_txt
+        else:
+            combined = ""
+
+        if len(countryballs) < 1:
 
             if user_obj == interaction.user:
                 await interaction.followup.send(
-                    f"You don't have any {combined} {settings.plural_collectible_name} yet."
+                    f"You don't have any {season_str} {combined} "
+                    f"{settings.plural_collectible_name} yet."
                 )
             else:
                 await interaction.followup.send(
-                    f"{user_obj.name} doesn't have any {combined} "
+                    f"{user_obj.name} doesn't have any {season_str} {combined} "
                     f"{settings.plural_collectible_name} yet."
                 )
             return
+
         if reverse:
             countryballs.reverse()
 
         paginator = CountryballsViewer(interaction, countryballs)
         if user_obj == interaction.user:
-            await paginator.start()
+            await paginator.start(
+                content=(
+                    f"Viewing your {season_str} {combined} {settings.plural_collectible_name}"
+                )
+            )
         else:
             await paginator.start(
-                content=f"Viewing {user_obj.name}'s {settings.plural_collectible_name}"
+                content=(
+                    f"Viewing {user_obj.name}'s {season_str} "
+                    f"{combined} {settings.plural_collectible_name}"
+                )
             )
 
     @app_commands.choices(
