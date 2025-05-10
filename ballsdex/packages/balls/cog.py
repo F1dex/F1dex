@@ -233,7 +233,6 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             combined = ""
 
         if len(countryballs) < 1:
-
             if user_obj == interaction.user:
                 await interaction.followup.send(
                     f"You don't have any {season_str} {combined} "
