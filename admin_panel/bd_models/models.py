@@ -69,6 +69,12 @@ class TradeCooldownPolicy(models.IntegerChoices):
     BYPASS = 2
 
 
+class BallSeasons(models.IntegerChoices):
+    F12024 = 1
+    CHAMPS = 2
+    F12025 = 3
+
+
 class Player(models.Model):
     discord_id = models.BigIntegerField(unique=True, help_text="Discord user ID")
     donation_policy = models.SmallIntegerField(
@@ -248,6 +254,13 @@ class Ball(models.Model):
     regime_id: int
     created_at = models.DateTimeField(blank=True, null=True, auto_now_add=True, editable=False)
     translations = models.TextField(blank=True, null=True)
+    season = models.SmallIntegerField(
+        choices=BallSeasons.choices,
+        help_text="What season the ball is from",
+        default=None,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self) -> str:
         return self.country

@@ -122,6 +122,12 @@ class Special(models.Model):
         return self.name
 
 
+class BallSeasons(IntEnum):
+    F12024 = 1
+    CHAMPS = 2
+    F12025 = 3
+
+
 class Ball(models.Model):
     regime_id: int
     economy_id: int
@@ -183,6 +189,11 @@ class Ball(models.Model):
     )
     capacity_logic = fields.JSONField(description="Effect of this capacity", default={})
     created_at = fields.DatetimeField(auto_now_add=True, null=True)
+    season = fields.IntEnumField(
+        BallSeasons,
+        description="What season this ball is from",
+        default=None,
+    )
 
     instances: fields.BackwardFKRelation[BallInstance]
 
