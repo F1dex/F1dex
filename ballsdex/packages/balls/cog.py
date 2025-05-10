@@ -318,7 +318,13 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             if await inventory_privacy(self.bot, interaction, player, user_obj) is False:
                 return
 
-        bot_countryballs = {x: y.emoji_id for x, y in balls.items() if y.enabled}
+        bot_countryballs = {
+            x: y.emoji_id
+            for x, y in balls.items()
+            if y.enabled
+            and (season is None or y.season == season.value)
+            and (not special or special.end_date is None or y.created_at < special.end_date)
+        }
 
         filters = {"player__discord_id": user_obj.id}
 
@@ -327,17 +333,9 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         if special:
             filters["special"] = special
-            bot_countryballs = {
-                x: y.emoji_id
-                for x, y in balls.items()
-                if y.enabled and (special.end_date is None or y.created_at < special.end_date)
-            }
 
         if season is not None:
             filters["ball__season"] = season
-            bot_countryballs.update({
-                x: y.emoji_id for x, y in balls.items() if y.season == season.value
-            })
 
         if not bot_countryballs:
             await interaction.followup.send(
