@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -6,6 +7,8 @@ if TYPE_CHECKING:
 
     from ballsdex.core.bot import BallsDexBot
     from ballsdex.core.models import BallInstance, Battle, Player
+
+log = logging.getLogger("ballsdex.packages.battle")
 
 
 @dataclass(slots=True)

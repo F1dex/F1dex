@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, List
 
 import discord
@@ -11,6 +12,8 @@ from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
+
+log = logging.getLogger("ballsdex.packages.balls")
 
 
 class CountryballsSource(menus.ListPageSource):

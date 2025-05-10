@@ -1,3 +1,4 @@
+import logging
 import random
 import re
 from collections import defaultdict
@@ -8,7 +9,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button, View, button
 
-from ballsdex.core.models import BallInstance, PackInstance, Player, Special
+from ballsdex.core.models import Ball, BallInstance, PackInstance, Player, Special
 from ballsdex.core.models import Packs as PackModel
 from ballsdex.core.utils.buttons import ConfirmChoiceView
 from ballsdex.core.utils.paginator import FieldPageSource, Pages
@@ -19,28 +20,38 @@ from ballsdex.settings import settings
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
 
+log = logging.getLogger("ballsdex.packages.packs")
+
 
 def parse_rewards(rewards_str: str) -> dict:
-    # TODO: add specify_collectibles to parsing with exact matching
     rewards = {"special": []}
     lines = [line.strip() for line in rewards_str.splitlines() if line.strip()]
 
     for line in lines:
-        if match := re.match(r"special=([\w\s]+)\((\d+)%\)", line):
+        if match := re.match(r"special=([\w\s]+)\((\d+(?:\.\d+)?)%\)", line):
             name, chance = match.groups()
-            rewards["special"].append({"type": name.strip(), "chance": int(chance)})
+            rewards["special"].append({"type": name.strip(), "chance": float(chance)})
+
         elif match := re.match(r"collectible_amount=(\d+)", line):
             rewards["collectible_amount"] = int(match.group(1))
-        elif match := re.match(r"currency_amount_choices=(\d+)\((\d+)%\)", line):
-            amount, chance = map(int, match.groups())
+
+        elif match := re.match(r"currency_amount_choices=(\d+)\((\d+(?:\.\d+)?)%\)", line):
+            amount, chance = match.groups()
             rewards.setdefault("currency_amount_choices", []).append(
-                {"amount": amount, "chance": chance}
+                {"amount": int(amount), "chance": float(chance)}
             )
+
         elif match := re.match(r"currency_amount=(\d+)-(\d+)", line):
             min_amt, max_amt = map(int, match.groups())
             rewards["currency_amount"] = random.randint(min_amt, max_amt)
+
         elif match := re.match(r"currency_amount=(\d+)", line):
             rewards["currency_amount"] = int(match.group(1))
+
+        elif match := re.match(r"specify_collectibles=(.+)", line):
+            collectibles_str = match.group(1)
+            collectibles = [name.strip() for name in re.split(r",\s*", collectibles_str)]
+            rewards["specify_collectibles"] = collectibles
 
     return rewards
 
@@ -66,12 +77,29 @@ async def open_pack(
     reward_lines = []
     special = parsed.get("special", [])
     collectible_count = parsed.get("collectible_amount", 0)
+    specify_names = parsed.get("specify_collectibles", [])
+    available_specified = []
     reward_lines.append(
         f"**You have packed {collectible_count} {settings.plural_collectible_name}!**\n"
     )
 
+    for name in specify_names:
+        collectible = await Ball.filter(name__iexact=name).first()
+        if collectible:
+            available_specified.append(collectible)
+        else:
+            log.warning(
+                f"Collectible with name '{name}' is specified in a pack, but it cannot found, "
+                "hence it will not be able to be given out from the pack."
+            )
+            pass
+
     for _ in range(collectible_count):
-        collectible = await decide_collectible()
+        if available_specified:
+            collectible = random.choice(available_specified)
+        else:
+            collectible = decide_collectible()
+
         applied_special: Special | None = None
 
         total_chance = sum(sp["chance"] for sp in special)

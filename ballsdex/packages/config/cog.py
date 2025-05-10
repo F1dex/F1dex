@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, Optional, cast
 
 import discord
@@ -11,6 +12,8 @@ from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
+
+log = logging.getLogger("ballsdex.packages.config")
 
 
 @app_commands.default_permissions(manage_guild=True)

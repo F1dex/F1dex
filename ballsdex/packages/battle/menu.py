@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
     from ballsdex.packages.battle.cog import Battle as BattleCog
 
-log = logging.getLogger("ballsdex.packages.battle.menu")
+log = logging.getLogger("ballsdex.packages.battle")
 
 
 class InvalidBattleOperation(Exception):

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, cast
@@ -20,6 +21,8 @@ from ballsdex.settings import settings
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
+
+log = logging.getLogger("ballsdex.packages.battle")
 
 
 def seconds_until_midnight_utc():

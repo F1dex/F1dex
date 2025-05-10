@@ -35,7 +35,7 @@ from ballsdex.settings import settings
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
 
-log = logging.getLogger("ballsdex.packages.countryballs")
+log = logging.getLogger("ballsdex.packages.balls")
 
 
 class DonationRequest(View):

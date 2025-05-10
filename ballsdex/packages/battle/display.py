@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING
 
 import discord
@@ -6,6 +7,8 @@ from ballsdex.packages.battle.battle_user import BattlingUser
 
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
+
+log = logging.getLogger("ballsdex.packages.battle")
 
 
 def _get_prefix_emote(battler: BattlingUser) -> str:
