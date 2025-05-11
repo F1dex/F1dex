@@ -404,7 +404,7 @@ class Packs(commands.GroupCog):
         )
         await interaction.followup.send(
             f"Are you sure you want to buy **{amount}x {pack_to_buy.name} pack{gram}** for "
-            f"**{total_price} {grammar} {settings.currency_emoji}**?",
+            f"**{total_price} {grammar} {settings.currency_emoji}?**",
             view=view,
         )
         await view.wait()
@@ -418,7 +418,7 @@ class Packs(commands.GroupCog):
             await PackInstance.create(player=player, pack=pack_to_buy)
 
         await interaction.followup.send(
-            f"You have successfully bought **{amount}x {pack_to_buy.name} pack{gram}**!",
+            f"You have successfully bought **{amount}x {pack_to_buy.name} pack{gram}!**",
         )
 
     @app_commands.command()

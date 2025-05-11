@@ -234,6 +234,12 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         else:
             combined = ""
 
+        combined = (
+            f"{combined.strip()} {season_str.strip()}"
+            if combined.strip() and season_str
+            else combined.strip() + season_str.strip()
+        )
+
         if len(countryballs) < 1:
             if user_obj == interaction.user:
                 await interaction.followup.send(
