@@ -234,9 +234,9 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             if name_part:
                 combined = f"{name_part} ({season_str})"
             else:
-                combined = season_str
+                combined = f"  ({season_str})"
         else:
-            combined = name_part
+            combined = name_part or ""
 
         if len(countryballs) < 1:
             if user_obj == interaction.user:
