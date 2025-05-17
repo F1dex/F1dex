@@ -221,37 +221,35 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             "F12025": "F1 2025",
             "LIMITED": "Limited",
         }
-        season_str = f" ({season_mapping.get(season.name, season.name)})" if season else ""
+
+        season_str = season_mapping.get(season.name, season.name) if season else ""
+
         ball_txt = countryball.country if countryball else ""
         special_txt = special if special else ""
 
-        if special_txt and ball_txt:
-            combined = f"{special_txt} {ball_txt}"
-        elif special_txt:
-            combined = special_txt
-        elif ball_txt:
-            combined = ball_txt
-        else:
-            combined = ""
+        parts = [special_txt, ball_txt]
+        name_part = " ".join(p for p in parts if p)
 
-        combined = (
-            f"{combined.strip()} {season_str.strip()}"
-            if combined.strip() and season_str
-            else combined.strip() + season_str.strip()
-        )
+        if season_str:
+            if name_part:
+                combined = f"{name_part} ({season_str})"
+            else:
+                combined = season_str
+        else:
+            combined = name_part
 
         if len(countryballs) < 1:
             if user_obj == interaction.user:
                 await interaction.followup.send(
-                    f"You don't have any {season_str}{combined} "
-                    f"{settings.plural_collectible_name} yet."
+                    f"You don't have any {combined} {settings.plural_collectible_name} yet."
                 )
             else:
                 await interaction.followup.send(
-                    f"{user_obj.name} doesn't have any {season_str}{combined} "
+                    f"{user_obj.name} doesn't have any {combined} "
                     f"{settings.plural_collectible_name} yet."
                 )
             return
+
 
         if reverse:
             countryballs.reverse()
@@ -259,16 +257,11 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         paginator = CountryballsViewer(interaction, countryballs)
         if user_obj == interaction.user:
             await paginator.start(
-                content=(
-                    f"Viewing your {season_str}{combined} {settings.plural_collectible_name}"
-                )
+                content=f"Viewing your {combined} {settings.plural_collectible_name}"
             )
         else:
             await paginator.start(
-                content=(
-                    f"Viewing {user_obj.name}'s {season_str} "
-                    f"{combined}{settings.plural_collectible_name}"
-                )
+                content=f"Viewing {user_obj.name}'s {combined} {settings.plural_collectible_name}"
             )
 
     @app_commands.choices(
