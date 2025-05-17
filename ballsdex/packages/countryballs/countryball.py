@@ -42,6 +42,14 @@ def amount_from_rarity(rarity: float) -> int:
     return int(round(amount))
 
 
+def special_bonus_from_rarity(rarity: float) -> int:
+    a = 35
+    b = 0.65
+    rarity = max(rarity, 1e-6)
+    bonus = a * (rarity ** -b)
+    return int(round(bonus))
+
+
 class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name}!"):
     name = TextInput(
         label=f"Name of this {settings.collectible_name}",
@@ -108,11 +116,15 @@ class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name
             interaction.user, player=player, guild=interaction.guild
         )
 
+        amount = amount_from_rarity(self.ball.rarity)
+        if ball.special:
+            amount += special_bonus_from_rarity(ball.special.rarity)
+
         await interaction.followup.send(
             self.view.get_catch_message(ball, has_caught_before, interaction.user.mention),
             allowed_mentions=discord.AllowedMentions(users=player.can_be_mentioned),
         )
-        await player.add_coins(amount_from_rarity(self.ball.rarity))
+        await player.add_coins(amount)
         await interaction.followup.edit_message(self.view.message.id, view=self.view)
 
 
@@ -441,7 +453,11 @@ class BallSpawnView(View):
             + " "
         )
 
+        amount = amount_from_rarity(ball.ball.rarity)
+        if ball.special:
+            amount += special_bonus_from_rarity(ball.special.rarity)
+
         return caught_message + (
             f"`(#{ball.pk:0X}, {ball.attack_bonus:+}%/{ball.health_bonus:+}%)`"
-            f"**(+{amount_from_rarity(ball.ball.rarity)} {settings.currency_emoji})**\n\n{text}"
+            f"**(+{amount} {settings.currency_emoji})**\n\n{text}"
         )
