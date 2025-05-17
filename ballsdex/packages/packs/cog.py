@@ -371,7 +371,7 @@ class Packs(commands.GroupCog):
 
         Parameters
         ----------
-        pack: PackTransform
+        pack: PackEnabledTransform
             The pack to buy.
         amount: int | None
             The amount of packs to buy. Defaults to 1.
