@@ -181,6 +181,9 @@ class Ball(models.Model):
     collection_card = fields.CharField(
         max_length=200, description="Image used when displaying balls"
     )
+    overlay = fields.CharField(
+        max_length=200, description="Image used as a card overlay", null=True
+    )
     credits = fields.CharField(max_length=64, description="Author of the collection artwork")
     capacity_name = fields.CharField(
         max_length=64, description="Name of the countryball's ability"

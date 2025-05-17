@@ -215,6 +215,9 @@ class Ball(models.Model):
     collection_card = models.ImageField(
         max_length=200, help_text="Image used when displaying balls"
     )
+    overlay = models.ImageField(
+        max_length=200, help_text="Image used as a card overlay", null=True, blank=True
+    )
     credits = models.CharField(max_length=64, help_text="Author of the collection artwork")
     capacity_name = models.CharField(max_length=64, help_text="Name of the countryball's capacity")
     capacity_description = models.CharField(
@@ -273,6 +276,10 @@ class Ball(models.Model):
     @admin.display(description="Current spawn asset")
     def spawn_image(self) -> SafeText:
         return image_display(str(self.wild_card))
+
+    @admin.display(description="Current overlay asset")
+    def overlay_image(self) -> SafeText:
+        return image_display(str(self.overlay))
 
     def save(
         self,

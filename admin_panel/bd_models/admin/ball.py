@@ -84,7 +84,7 @@ class EconomyAdmin(admin.ModelAdmin):
 @admin.register(Ball)
 class BallAdmin(admin.ModelAdmin):
     autocomplete_fields = ("regime", "economy")
-    readonly_fields = ("collection_image", "spawn_image")
+    readonly_fields = ("collection_image", "spawn_image", "overlay_image")
     save_on_top = True
     fieldsets = [
         (
@@ -112,6 +112,8 @@ class BallAdmin(admin.ModelAdmin):
                     "wild_card",
                     "collection_image",
                     "collection_card",
+                    "overlay_image",
+                    "overlay",
                     "credits",
                 ],
             },
