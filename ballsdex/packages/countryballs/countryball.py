@@ -43,11 +43,11 @@ def amount_from_rarity(rarity: float) -> int:
 
 
 def special_bonus_from_rarity(rarity: float) -> int:
-    a = 35
+    a = 15
     b = 0.65
     rarity = max(rarity, 1e-6)
     bonus = a * (rarity ** -b)
-    return int(round(bonus))
+    return int(round(bonus / 5) * 5)
 
 
 class CountryballNamePrompt(Modal, title=f"Catch this {settings.collectible_name}!"):
