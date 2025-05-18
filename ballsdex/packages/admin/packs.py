@@ -114,4 +114,4 @@ class Packs(app_commands.Group):
         await log_action(
             f"{interaction.user} removed {amount} '{pack.name}' pack{plural} from {user.name}.",
             interaction.client,
-        ) # TODO: use packtransform
+        )  # TODO: use packtransform

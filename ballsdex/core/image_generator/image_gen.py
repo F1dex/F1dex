@@ -147,4 +147,12 @@ def draw_card(
         image = Image.alpha_composite(image, overlay)
         overlay.close()
 
+    if ball_instance.specialcard and getattr(ball_instance.specialcard, "overlay", None):
+        special_overlay = Image.open(media_path + ball_instance.specialcard.overlay).convert(
+            "RGBA"
+        )
+        special_overlay = special_overlay.resize((image.width, image.height))
+        image = Image.alpha_composite(image, special_overlay)
+        special_overlay.close()
+
     return image, {"format": "WEBP"}

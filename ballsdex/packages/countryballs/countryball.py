@@ -46,7 +46,7 @@ def special_bonus_from_rarity(rarity: float) -> int:
     a = 15
     b = 0.65
     rarity = max(rarity, 1e-6)
-    bonus = a * (rarity ** -b)
+    bonus = a * (rarity**-b)
     return int(round(bonus / 5) * 5)
 
 

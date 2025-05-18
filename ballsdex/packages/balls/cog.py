@@ -250,7 +250,6 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 )
             return
 
-
         if reverse:
             countryballs.reverse()
 

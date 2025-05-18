@@ -186,6 +186,9 @@ class Special(models.Model):
     background = models.ImageField(
         max_length=200, blank=True, null=True, help_text="1428x2000 PNG image"
     )
+    background = models.ImageField(
+        max_length=200, blank=True, null=True, help_text="Image used as overlay"
+    )
     tradeable = models.BooleanField(
         help_text="Whether balls of this event can be traded", default=True
     )
