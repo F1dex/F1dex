@@ -223,7 +223,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         }
 
         season_txt = season_mapping.get(season.name, season.name) if season else None
-        special_txt = special if special else None
+        special_txt = special.name if special else None
         ball_txt = countryball.country if countryball else None
         parts = [part for part in (season_txt, special_txt, ball_txt) if part]
         combined = " ".join(parts)
