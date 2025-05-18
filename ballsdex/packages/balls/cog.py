@@ -222,21 +222,11 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             "LIMITED": "Limited",
         }
 
-        season_str = season_mapping.get(season.name, season.name) if season else ""
-
-        ball_txt = countryball.country if countryball else ""
-        special_txt = special if special else ""
-
-        parts = [special_txt, ball_txt]
-        name_part = " ".join(p for p in parts if p)
-
-        if season_str:
-            if name_part:
-                combined = f"{name_part} ({season_str})"
-            else:
-                combined = f"  ({season_str})"
-        else:
-            combined = name_part or ""
+        season_txt = season_mapping.get(season.name, season.name) if season else None
+        special_txt = special if special else None
+        ball_txt = countryball.country if countryball else None
+        parts = [part for part in (season_txt, special_txt, ball_txt) if part]
+        combined = " ".join(parts)
 
         if len(countryballs) < 1:
             if user_obj == interaction.user:
