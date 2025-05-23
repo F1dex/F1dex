@@ -131,8 +131,10 @@ class Trade(commands.GroupCog):
                 "You cannot trade with yourself.", ephemeral=True
             )
             return
+
         player1, _ = await Player.get_or_create(discord_id=interaction.user.id)
         player2, _ = await Player.get_or_create(discord_id=user.id)
+
         blocked = await player1.is_blocked(player2)
         if blocked:
             await interaction.response.send_message(
@@ -191,13 +193,12 @@ class Trade(commands.GroupCog):
         special: Special
             Filter the results of autocompletion to a special event. Ignored afterwards.
         """
-        if not countryball:
-            return
         if not countryball.is_tradeable:
             await interaction.response.send_message(
                 f"You cannot trade this {settings.collectible_name}.", ephemeral=True
             )
             return
+
         await interaction.response.defer(ephemeral=True, thinking=True)
         if countryball.favorite:
             view = ConfirmChoiceView(
@@ -219,6 +220,7 @@ class Trade(commands.GroupCog):
         if not trade or not trader:
             await interaction.followup.send("You do not have an ongoing trade.", ephemeral=True)
             return
+
         if trader.locked:
             await interaction.followup.send(
                 "You have locked your proposal, it cannot be edited! "
@@ -226,12 +228,14 @@ class Trade(commands.GroupCog):
                 ephemeral=True,
             )
             return
+
         if countryball in trader.proposal:
             await interaction.followup.send(
                 f"You already have this {settings.collectible_name} in your proposal.",
                 ephemeral=True,
             )
             return
+
         if await countryball.is_locked():
             await interaction.followup.send(
                 f"This {settings.collectible_name} is currently in an active trade or donation, "
@@ -270,10 +274,12 @@ class Trade(commands.GroupCog):
             Filter the results to a specific filter
         """
         await interaction.response.defer(ephemeral=True, thinking=True)
+
         trade, trader = self.get_trade(interaction)
         if not trade or not trader:
             await interaction.followup.send("You do not have an ongoing trade.", ephemeral=True)
             return
+
         if trader.locked:
             await interaction.followup.send(
                 "You have locked your proposal, it cannot be edited! "
@@ -281,7 +287,8 @@ class Trade(commands.GroupCog):
                 ephemeral=True,
             )
             return
-        query = BallInstance.filter(player__discord_id=interaction.user.id)
+
+        query = BallInstance.filter(player__discord_id=interaction.user.id, deleted=False)
         if countryball:
             query = query.filter(ball=countryball)
         if special:
@@ -290,12 +297,14 @@ class Trade(commands.GroupCog):
             query = sort_balls(sort, query)
         if filter:
             query = filter_balls(filter, query, interaction.guild_id)
+
         balls = await query
         if not balls:
             await interaction.followup.send(
                 f"No {settings.plural_collectible_name} found.", ephemeral=True
             )
             return
+
         balls = [x for x in balls if x.is_tradeable]
 
         view = BulkAddView(interaction, balls, self)  # type: ignore

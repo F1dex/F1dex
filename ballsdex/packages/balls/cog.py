@@ -317,7 +317,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             and (not special or special.end_date is None or y.created_at < special.end_date)
         }
 
-        filters = {"player__discord_id": user_obj.id}
+        filters = {"player__discord_id": user_obj.id, "deleted": False}
 
         if season is None:
             filters["ball__enabled"] = True
@@ -731,7 +731,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             return
 
         assert interaction.guild
-        filters = {}
+        filters = {"deleted": False}
         if countryball:
             filters["ball"] = countryball
         if special:
@@ -775,7 +775,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         player, _ = await Player.get_or_create(discord_id=interaction.user.id)
         await player.fetch_related("balls")
         is_special = type == DuplicateType.specials
-        queryset = BallInstance.filter(player=player)
+        queryset = BallInstance.filter(player=player, deleted=False)
 
         if is_special:
             queryset = queryset.filter(special_id__isnull=False).prefetch_related("special")
@@ -880,9 +880,10 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             )
             return
 
-        queryset = BallInstance.filter(ball__enabled=True).distinct()
+        queryset = BallInstance.filter(ball__enabled=True, deleted=False).distinct()
         if special:
-            queryset = queryset.filter(special=special)
+            queryset = queryset.filter(special=special, deleted=False)
+
         user1_balls = cast(
             list[int],
             await queryset.filter(player=player1).values_list("ball_id", flat=True),
@@ -961,11 +962,12 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         await interaction.response.defer(thinking=True)
         player, _ = await Player.get_or_create(discord_id=interaction.user.id)
 
-        query = BallInstance.filter(player=player).prefetch_related(
+        query = BallInstance.filter(player=player, deleted=False).prefetch_related(
             "player", "trade_player", "special"
         )
         if countryball:
-            query = query.filter(ball=countryball)
+            query = query.filter(ball=countryball, deleted=False)
+
         balls = await query
 
         if not balls:

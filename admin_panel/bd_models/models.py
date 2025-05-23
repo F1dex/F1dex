@@ -336,6 +336,7 @@ class BallInstance(models.Model):
     )
     spawned_time = models.DateTimeField(blank=True, null=True)
     packed = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=False)
 
     def __getattribute__(self, name: str) -> Any:
         if name == "ball":

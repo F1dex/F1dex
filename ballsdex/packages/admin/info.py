@@ -68,7 +68,9 @@ class Info(app_commands.Group):
         total_server_balls = await BallInstance.filter(
             catch_date__gte=datetime.datetime.now() - datetime.timedelta(days=days),
             server_id=guild.id,
+            deleted=False,
         ).prefetch_related("player")
+
         if guild.owner_id:
             owner = await interaction.client.fetch_user(guild.owner_id)
             embed = discord.Embed(
@@ -83,6 +85,7 @@ class Info(app_commands.Group):
                 url=url,
                 color=discord.Color.blurple(),
             )
+
         embed.add_field(name="Members:", value=guild.member_count)
         embed.add_field(name="Spawn enabled:", value=spawn_enabled)
         embed.add_field(name="Created at:", value=format_dt(guild.created_at, style="F"))
@@ -97,6 +100,7 @@ class Info(app_commands.Group):
 
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
+
         await interaction.followup.send(embed=embed, ephemeral=True)
 
     @app_commands.command()
@@ -131,6 +135,7 @@ class Info(app_commands.Group):
         total_user_balls = await BallInstance.filter(
             catch_date__gte=datetime.datetime.now() - datetime.timedelta(days=days),
             player=player,
+            deleted=False,
         )
         plural = (
             f"{settings.currency_name}"
@@ -165,7 +170,7 @@ class Info(app_commands.Group):
         )
         embed.add_field(
             name=f"Total {settings.plural_collectible_name} caught:",
-            value=await BallInstance.filter(player__discord_id=user.id).count(),
+            value=await BallInstance.filter(player__discord_id=user.id, deleted=False).count(),
         )
         embed.add_field(
             name=f"Total unique {settings.plural_collectible_name} caught:",

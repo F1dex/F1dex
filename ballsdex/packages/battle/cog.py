@@ -198,14 +198,13 @@ class Battle(commands.GroupCog):
         special: SpecialEnabledTransform | None
             Filter the results of autocompletion to a special event. Ignored afterwards.
         """
-        if not countryball:
-            return
         await interaction.response.defer(ephemeral=True, thinking=True)
 
         battle, battler = self.get_battle(interaction)
         if not battle or not battler:
             await interaction.followup.send("You do not have an ongoing battle.", ephemeral=True)
             return
+
         if battler.locked:
             await interaction.followup.send(
                 "You have locked your deck, it cannot be edited! "
@@ -213,12 +212,14 @@ class Battle(commands.GroupCog):
                 ephemeral=True,
             )
             return
+
         if countryball in battler.proposal:
             await interaction.followup.send(
                 f"You already have this {settings.collectible_name} in your deck.",
                 ephemeral=True,
             )
             return
+
         if await countryball.is_locked():
             await interaction.followup.send(
                 f"This {settings.collectible_name} is currently in an active battle, trade or "
@@ -226,6 +227,7 @@ class Battle(commands.GroupCog):
                 ephemeral=True,
             )
             return
+
         if battle.max_drivers and len(battler.proposal) >= battle.max_drivers:
             await interaction.followup.send(
                 f"You cannot have more than {battle.max_drivers} "
@@ -247,17 +249,15 @@ class Battle(commands.GroupCog):
         Parameters
         ----------
         countryball: BallInstance
-            The countryball you want to remove from your deck
+            The countryball you want to remove from your deck.
         """
-        if not countryball:
-            return
-
         battle, battler = self.get_battle(interaction)
         if not battle or not battler:
             await interaction.response.send_message(
                 "You do not have an ongoing battle.", ephemeral=True
             )
             return
+
         if battler.locked:
             await interaction.response.send_message(
                 "You have locked your deck, it cannot be edited! "
@@ -265,11 +265,13 @@ class Battle(commands.GroupCog):
                 ephemeral=True,
             )
             return
+
         if countryball not in battler.proposal:
             await interaction.response.send_message(
                 f"That {settings.collectible_name} is not in your deck.", ephemeral=True
             )
             return
+
         battler.proposal.remove(countryball)
         await interaction.response.send_message(
             f"{settings.collectible_name} removed.", ephemeral=True

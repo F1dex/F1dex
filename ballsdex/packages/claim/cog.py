@@ -62,8 +62,10 @@ class Claim(commands.GroupCog):
                     card = await BallInstance.filter(
                         ball=ball, player=player, special=special
                     ).first()
+
                     if card and total_owned < needed:
-                        await card.delete()
+                        card.deleted = True
+                        await card.save()
 
                         user = await self.bot.fetch_user(player.discord_id)
                         try:

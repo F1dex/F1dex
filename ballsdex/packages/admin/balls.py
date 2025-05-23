@@ -406,6 +406,7 @@ class Balls(app_commands.Group):
         interaction: discord.Interaction[BallsDexBot],
         user: discord.User,
         percentage: int | None = None,
+        hard_delete: bool = False,
     ):
         """
         Reset a player's countryballs.
@@ -416,8 +417,11 @@ class Balls(app_commands.Group):
             The user you want to reset the countryballs of.
         percentage: int | None
             The percentage of countryballs to delete, if not all. Used for sanctions.
+        hard_delete: bool
+            If true, the countryballs are hard deleted. Otherwise, they are soft deleted.
         """
         player = await Player.get_or_none(discord_id=user.id)
+
         if not player:
             await interaction.response.send_message(
                 "The user you gave does not exist.", ephemeral=True
@@ -428,6 +432,7 @@ class Balls(app_commands.Group):
                 "The percentage must be between 1 and 99.", ephemeral=True
             )
             return
+
         await interaction.response.defer(ephemeral=True, thinking=True)
 
         if not percentage:
@@ -450,14 +455,25 @@ class Balls(app_commands.Group):
         await view.wait()
         if not view.value:
             return
+
         if percentage:
-            balls = await BallInstance.filter(player=player)
+            balls = await BallInstance.filter(player=player, deleted=False)
             to_delete = random.sample(balls, int(len(balls) * (percentage / 100)))
+
             for ball in to_delete:
-                await ball.delete()
+                if hard_delete:
+                    await ball.delete()
+                else:
+                    ball.deleted = True
+                    await ball.save()
+
             count = len(to_delete)
         else:
-            count = await BallInstance.filter(player=player).delete()
+            if hard_delete:
+                count = await BallInstance.filter(player=player).delete()
+            else:
+                count = await BallInstance.filter(player=player).update(deleted=True)
+
         await interaction.followup.send(
             f"{count} {settings.plural_collectible_name} from {user} have been deleted.",
             ephemeral=True,
@@ -489,7 +505,7 @@ class Balls(app_commands.Group):
         """
         if interaction.response.is_done():
             return
-        filters = {}
+        filters = {"deleted": False}
         if countryball:
             filters["ball"] = countryball
         if special:

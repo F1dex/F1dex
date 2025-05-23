@@ -17,6 +17,7 @@ from ballsdex.core.models import (
     FriendPolicy,
     Friendship,
     MentionPolicy,
+    PackInstance,
     PrivacyPolicy,
     Trade,
     TradeCooldownPolicy,
@@ -159,6 +160,13 @@ class Player(commands.GroupCog):
         """
         Delete your player data.
         """
+        player = await PlayerModel.get(discord_id=interaction.user.id)
+        if not player:
+            await interaction.response.send_message(
+                "You don't have any player data to delete.", ephemeral=True
+            )
+            return
+
         view = ConfirmChoiceView(interaction)
         await interaction.response.send_message(
             "Are you sure you want to delete your player data?", view=view, ephemeral=True
@@ -166,8 +174,11 @@ class Player(commands.GroupCog):
         await view.wait()
         if view.value is None or not view.value:
             return
-        player, _ = await PlayerModel.get_or_create(discord_id=interaction.user.id)
-        await player.delete()
+
+        await BallInstance.filter(player=player, deleted=False).update(deleted=True)
+        await PackInstance.filter(player=player).delete()
+
+        await interaction.followup.send("Your player data has been deleted.", ephemeral=True)
 
     @friend.command(name="add")
     async def friend_add(
@@ -541,6 +552,7 @@ class Player(commands.GroupCog):
         Display some of your info in the bot!
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
+
         try:
             player = await PlayerModel.get(discord_id=interaction.user.id).prefetch_related(
                 "balls"
@@ -548,7 +560,10 @@ class Player(commands.GroupCog):
         except DoesNotExist:
             await interaction.followup.send("You haven't got any info to show!", ephemeral=True)
             return
-        ball = await BallInstance.filter(player=player).prefetch_related("special", "trade_player")
+
+        ball = await BallInstance.filter(player=player, deleted=False).prefetch_related(
+            "special", "trade_player"
+        )
 
         user = interaction.user
         bot_countryballs = {x: y.emoji_id for x, y in balls.items() if y.enabled}
@@ -748,19 +763,22 @@ async def get_items_csv(player: PlayerModel) -> BytesIO:
     """
     Get a CSV file with all items of the player.
     """
-    balls = await BallInstance.filter(player=player).prefetch_related(
+    balls = await BallInstance.filter(player=player, deleted=False).prefetch_related(
         "ball", "trade_player", "special"
     )
+
     txt = (
         f"id,hex id,{settings.collectible_name},catch date,trade_player"
         ",special,attack,attack bonus,hp,hp_bonus\n"
     )
+
     for ball in balls:
         txt += (
-            f"{ball.id},{ball.id:0X},{ball.ball.country},{ball.catch_date},"  # type: ignore
+            f"{ball.pk},{ball.pk:0X},{ball.ball.country},{ball.catch_date},"  # type: ignore
             f"{ball.trade_player.discord_id if ball.trade_player else 'None'},{ball.special},"
             f"{ball.attack},{ball.attack_bonus},{ball.health},{ball.health_bonus}\n"
         )
+
     return BytesIO(txt.encode("utf-8"))
 
 
@@ -774,16 +792,20 @@ async def get_trades_csv(player: PlayerModel) -> BytesIO:
         .prefetch_related("player1", "player2")
     )
     txt = "id,date,player1,player2,player1 received,player2 received\n"
+
     for trade in trade_history:
         player1_items = await TradeObject.filter(
             trade=trade, player=trade.player1
         ).prefetch_related("ballinstance")
+
         player2_items = await TradeObject.filter(
             trade=trade, player=trade.player2
         ).prefetch_related("ballinstance")
+
         txt += (
             f"{trade.id},{trade.date},{trade.player1.discord_id},{trade.player2.discord_id},"
             f"{','.join([i.ballinstance.to_string() for i in player2_items])},"  # type: ignore
             f"{','.join([i.ballinstance.to_string() for i in player1_items])}\n"  # type: ignore
         )
+
     return BytesIO(txt.encode("utf-8"))
