@@ -248,13 +248,13 @@ class TTLModelTransformer(ModelTransformer[T]):
         """
         return await self.model.all()
 
-    async def maybe_refresh(self):
+    async def maybe_refresh(self, interaction: discord.Interaction["BallsDexBot"]):
         t = time.time()
         if t - self.last_refresh > self.ttl:
             self.items = {x.pk: x for x in await self.load_items()}
             self.last_refresh = t
             self.search_map = {
-                x: (await self.key(x, None)).lower()
+                x: (await self.key(x, interaction)).lower()
                 for x in self.items.values()
             }
 
