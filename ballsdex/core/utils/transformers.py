@@ -261,7 +261,7 @@ class TTLModelTransformer(ModelTransformer[T]):
     async def get_options(
         self, interaction: Interaction["BallsDexBot"], value: str
     ) -> list[app_commands.Choice[str]]:
-        await self.maybe_refresh()
+        await self.maybe_refresh(interaction)
 
         i = 0
         choices: list[app_commands.Choice] = []
