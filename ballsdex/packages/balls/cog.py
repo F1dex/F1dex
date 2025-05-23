@@ -1047,9 +1047,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             return
 
         if countryball:
-            sorted_collectibles = sorted(
-                enabled_collectibles, key=lambda c: (c.rarity, c.country)
-            )
+            sorted_collectibles = sorted(enabled_collectibles, key=lambda c: (c.rarity, c.country))
             index = sorted_collectibles.index(countryball)
             emoji = self.bot.get_emoji(countryball.emoji_id) or "N/A"
 
