@@ -1065,11 +1065,11 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
             sorted_collectibles = sorted(enabled_collectibles, key=lambda c: c.rarity)
 
-            entries = []
+            entries: list[tuple[str, str]] = []
             for idx, collectible in enumerate(sorted_collectibles, start=1):
                 emoji = self.bot.get_emoji(collectible.emoji_id) or "N/A"
                 line = f"{idx}. {emoji} {collectible.country}\n"
-                entries.append((line))
+                entries.append(("", line))
 
             source = FieldPageSource(entries, per_page=10, inline=False, clear_description=False)
             source.embed.title = f"{settings.bot_name} Rarity List"
