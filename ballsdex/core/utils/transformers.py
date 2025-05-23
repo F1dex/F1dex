@@ -339,7 +339,10 @@ class PackTransformer(TTLModelTransformer[Packs]):
     model = Packs()
 
     def key(self, model: Packs) -> str:
-        return model.name
+        return (
+            f"{model.name} ({model.price} "
+            f"{settings.plural_currency_name} {settings.currency_emoji})"
+        )
 
     async def load_items(self) -> Iterable[Packs]:
         return packs.values()
