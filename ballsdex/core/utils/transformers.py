@@ -91,7 +91,7 @@ class ModelTransformer(app_commands.Transformer, Generic[T]):
     name: str
     model: T
 
-    def key(self, model: T) -> str:
+    def key(self, model: T, interaction: discord.Interaction) -> str:
         """
         Return a string used for searching while sending autocompletion suggestions.
         """
@@ -253,7 +253,10 @@ class TTLModelTransformer(ModelTransformer[T]):
         if t - self.last_refresh > self.ttl:
             self.items = {x.pk: x for x in await self.load_items()}
             self.last_refresh = t
-            self.search_map = {x: self.key(x).lower() for x in self.items.values()}
+            self.search_map = {
+                x: (await self.key(x, None)).lower()
+                for x in self.items.values()
+            }
 
     async def get_options(
         self, interaction: Interaction["BallsDexBot"], value: str
@@ -264,7 +267,9 @@ class TTLModelTransformer(ModelTransformer[T]):
         choices: list[app_commands.Choice] = []
         for item in self.items.values():
             if value.lower() in self.search_map[item]:
-                choices.append(app_commands.Choice(name=self.key(item), value=str(item.pk)))
+                choices.append(
+                    app_commands.Choice(name=await self.key(item, interaction), value=str(item.pk))
+                )
                 i += 1
                 if i == 25:
                     break
@@ -275,7 +280,7 @@ class BallTransformer(TTLModelTransformer[Ball]):
     name = settings.collectible_name
     model = Ball()
 
-    def key(self, model: Ball) -> str:
+    async def key(self, model: Ball, interaction: discord.Interaction) -> str:
         return model.country
 
     async def load_items(self) -> Iterable[Ball]:
@@ -305,7 +310,7 @@ class SpecialTransformer(TTLModelTransformer[Special]):
     name = "special event"
     model = Special()
 
-    def key(self, model: Special) -> str:
+    async def key(self, model: Special, interaction: discord.Interaction) -> str:
         return model.name
 
 
@@ -318,7 +323,7 @@ class RegimeTransformer(TTLModelTransformer[Regime]):
     name = "regime"
     model = Regime()
 
-    def key(self, model: Regime) -> str:
+    async def key(self, model: Regime, interaction: discord.Interaction) -> str:
         return model.name
 
     async def load_items(self) -> Iterable[Regime]:
@@ -329,7 +334,7 @@ class EconomyTransformer(TTLModelTransformer[Economy]):
     name = "economy"
     model = Economy()
 
-    def key(self, model: Economy) -> str:
+    async def key(self, model: Economy, interaction: discord.Interaction) -> str:
         return model.name
 
     async def load_items(self) -> Iterable[Economy]:
