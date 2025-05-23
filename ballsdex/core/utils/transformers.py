@@ -17,6 +17,8 @@ from ballsdex.core.models import (
     BallInstance,
     Economy,
     Packs,
+    PackInstance,
+    Player,
     Regime,
     Special,
     balls,
@@ -338,10 +340,13 @@ class PackTransformer(TTLModelTransformer[Packs]):
     name = "pack"
     model = Packs()
 
-    def key(self, model: Packs) -> str:
+    async def key(self, model: Packs, interaction: discord.Interaction) -> str:
+        p = await Player.get_or_none(discord_id=interaction.user.id)
+        packs = await PackInstance.filter(player=p, pack=model).count()
+
         return (
-            f"{model.name} ({model.price} "
-            f"{settings.plural_currency_name} {settings.currency_emoji})"
+            f"{model.name}, {model.price} {settings.plural_currency_name} "
+            f"{settings.currency_emoji} (You own {packs})"
         )
 
     async def load_items(self) -> Iterable[Packs]:
