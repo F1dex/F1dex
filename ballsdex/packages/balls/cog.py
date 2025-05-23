@@ -1020,3 +1020,61 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 embed.set_thumbnail(url=emoji.url)
 
         await interaction.followup.send(embed=embed)
+
+    @app_commands.command()
+    @app_commands.checks.cooldown(1, 10, key=lambda i: i.user.id)
+    async def rarity(
+        self,
+        interaction: discord.Interaction["BallsDexBot"],
+        countryball: BallEnabledTransform | None = None,
+    ):
+        """
+        Show a rarity list of the bot, or a specific countryball's rarity.
+
+        Parameters
+        ----------
+        countryball: BallEnabledTransform
+            Whether to show a specific countryball or not.
+        """
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        enabled_collectibles = [x for x in balls.values() if x.enabled]
+
+        if not enabled_collectibles:
+            await interaction.followup.send(
+                f"There are no collectibles registered in {settings.bot_name} yet.",
+                ephemeral=True,
+            )
+            return
+
+        if countryball:
+            sorted_collectibles = sorted(
+                enabled_collectibles, key=lambda c: (c.rarity, c.country)
+            )
+            index = sorted_collectibles.index(countryball)
+            emoji = self.bot.get_emoji(countryball.emoji_id) or "N/A"
+
+            await interaction.followup.send(
+                f"{emoji} {countryball} — Rarity: **{index + 1}**",
+                ephemeral=True,
+            )
+        else:
+            rarity_to_collectibles = {}
+            for collectible in enabled_collectibles:
+                rarity = collectible.rarity
+                if rarity not in rarity_to_collectibles:
+                    rarity_to_collectibles[rarity] = []
+                rarity_to_collectibles[rarity].append(collectible)
+
+            sorted_collectibles = sorted(enabled_collectibles, key=lambda c: c.rarity)
+
+            entries = []
+            for idx, collectible in enumerate(sorted_collectibles, start=1):
+                emoji = self.bot.get_emoji(collectible.emoji_id) or "N/A"
+                line = f"{idx}. {emoji} {collectible.country}\n"
+                entries.append((line))
+
+            source = FieldPageSource(entries, per_page=10, inline=False, clear_description=False)
+            source.embed.title = f"{settings.bot_name} Rarity List"
+            source.embed.color = discord.Color.green()
+            pages = Pages(source=source, interaction=interaction, compact=False)
+            await pages.start()
