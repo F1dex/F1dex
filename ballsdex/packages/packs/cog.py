@@ -1,3 +1,4 @@
+import enum
 import logging
 import random
 import re
@@ -166,6 +167,11 @@ async def open_pack(
     await interaction.followup.send(embed=result_embed, view=view, ephemeral=ephemeral)
 
 
+class PackSorting(enum.Enum):
+    price = "price"
+    alphabetical = "alphabetical"
+
+
 class PackConfirmChoiceView(View):
     def __init__(
         self,
@@ -331,18 +337,40 @@ class Packs(commands.GroupCog):
         self.bot = bot
 
     @app_commands.command()
-    async def list(self, interaction: discord.Interaction):
+    async def list(
+        self,
+        interaction: discord.Interaction,
+        sorting: PackSorting | None = None,
+        reverse: bool = False,
+    ):
         """
         List all packs.
+
+        Parameters
+        ----------
+        sorting: PackSorting | None
+            The sorting method to use. Defaults to None.
+        reverse: bool
+            Whether to reverse the sorting. Defaults to False.
         """
-        packs = await PackModel.filter(purchasable=True).order_by("price").all()
-        if not packs:
+        query = PackModel.filter(purchasable=True)
+        if sorting:
+            if sorting == PackSorting.price:
+                query = query.order_by(PackModel.price)
+            elif sorting == PackSorting.alphabetical:
+                query = query.order_by(PackModel.name)
+
+        results = await query
+        if reverse:
+            results.reverse()
+
+        if not results:
             await interaction.response.send_message("No packs available.", ephemeral=True)
             return
 
         entries: list[tuple[str, str]] = []
 
-        for idx, relation in enumerate(packs, start=1):
+        for idx, relation in enumerate(results, start=1):
             entries.append(
                 (
                     "",
@@ -422,18 +450,37 @@ class Packs(commands.GroupCog):
         )
 
     @app_commands.command()
-    async def inventory(self, interaction: discord.Interaction):
+    async def inventory(
+        self,
+        interaction: discord.Interaction,
+        sorting: PackSorting | None = None,
+        reverse: bool = False,
+    ):
         """
         View your pack inventory.
+
+        Parameters
+        ----------
+        sorting: PackSorting | None
+            The sorting method to use. Defaults to owned amount.
+        reverse: bool
+            Whether to reverse the sorting. Defaults to False.
         """
         player = await Player.get(discord_id=interaction.user.id)
         await interaction.response.defer(thinking=True, ephemeral=True)
 
-        owned_packs = (
-            await PackInstance.filter(player=player, opened=False).prefetch_related("pack").all()
-        )
+        query = PackInstance.filter(player=player, opened=False).prefetch_related("pack")
+        if sorting:
+            if sorting == PackSorting.price:
+                query = query.order_by("pack__price")
+            elif sorting == PackSorting.alphabetical:
+                query = query.order_by("pack__name")
 
-        if not owned_packs:
+        results = await query
+        if reverse:
+            results.reverse()
+
+        if not results:
             embed = discord.Embed(
                 title="🎒 Your Pack Inventory",
                 description="You don't own any packs yet.\nBuy some with `/packs buy`!",
@@ -449,37 +496,22 @@ class Packs(commands.GroupCog):
         )
 
         packs = defaultdict(int)
-        for pack in owned_packs:
-            packs[pack.pack.name] += 1
+        for inst in results:
+            packs[inst.pack.name] += 1
 
         sorted_packs = sorted(packs.items(), key=lambda x: x[1], reverse=True)
-
-        for pack_name, count in sorted_packs:
-            pack = await PackModel.get(name=pack_name)
-
-            grammar = (
-                f"{settings.currency_name}"
-                if pack.price == 1
-                else f"{settings.plural_currency_name}"
-            )
-
-            embed.add_field(
-                name=f"{pack.name} ({count} owned)",
-                value=f"Value of each pack: **{pack.price} {grammar} {settings.currency_emoji}**",
-                inline=False,
-            )
+        pack_names = [name for name, _ in sorted_packs]
+        all_packs = await PackModel.filter(name__in=pack_names)
+        pack_map = {p.name: p for p in all_packs}
 
         entries: list[tuple[str, str]] = []
-
         for pack_name, count in sorted_packs:
-            pack = await PackModel.get(name=pack_name)
-
+            pack = pack_map[pack_name]
             grammar = (
                 f"{settings.currency_name}"
                 if pack.price == 1
                 else f"{settings.plural_currency_name}"
             )
-
             entries.append(
                 (
                     "",
@@ -489,7 +521,7 @@ class Packs(commands.GroupCog):
             )
 
         source = FieldPageSource(entries, per_page=5, inline=False)
-        source.embed.title = "Pack inventory"
+        source.embed.title = "🎒 Your Pack Inventory"
         source.embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         source.embed.set_footer(text="To buy a pack, use /pack buy")
 
