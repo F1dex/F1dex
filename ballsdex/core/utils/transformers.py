@@ -360,7 +360,7 @@ class PackTransformer(TTLModelTransformer[Packs]):
 
 class PackEnabledTransformer(PackTransformer):
     async def load_items(self) -> Iterable[Packs]:
-        return await Packs.filter(purchasable=True).all()
+        return await Packs.filter(purchasable=True).order_by("price").all()
 
 
 BallTransform = app_commands.Transform[Ball, BallTransformer]
