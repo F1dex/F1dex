@@ -226,7 +226,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         special_txt = special.name if special else None
         ball_txt = countryball.country if countryball else None
         parts = [part for part in (season_txt, special_txt, ball_txt) if part]
-        combined = " ".join(parts)
+        combined = "".join(parts)
 
         if len(countryballs) < 1:
             if user_obj == interaction.user:
@@ -984,8 +984,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         total = len(balls)
         total_traded = len([x for x in balls if x.trade_player])
-        total_packed = len([x for x in balls if x.packed])
-        total_caught_self = total - total_traded - total_packed
+        total_packed = len([x for x in balls if x.packed and not x.trade_player])
+        total_caught_self = len([x for x in balls if not x.trade_player and not x.packed])
         special_count = len([x for x in balls if x.special])
         specials = defaultdict(int)
         all_specials = await Special.filter(hidden=False)
