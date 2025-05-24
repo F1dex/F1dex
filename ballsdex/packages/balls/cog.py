@@ -415,9 +415,10 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         special_str = f" ({special.name})" if special else ""
         season_str = f" ({season_mapping.get(season.name, season.name)})" if season else ""
 
+        valid_owned = owned_countryballs & bot_countryballs.keys()
+        progress = min(100.0, round(len(valid_owned) / len(bot_countryballs) * 100, 1))
         source.embed.description = (
-            f"{settings.bot_name}{special_str}{season_str} progression: "
-            f"**{round(len(owned_countryballs) / len(bot_countryballs) * 100, 1)}%**"
+            f"{settings.bot_name}{special_str}{season_str} progression: **{progress}%**"
         )
         source.embed.colour = discord.Colour.blurple()
         source.embed.set_author(name=user_obj.display_name, icon_url=user_obj.display_avatar.url)
