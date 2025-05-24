@@ -11,6 +11,7 @@ from tortoise.exceptions import DoesNotExist
 from tortoise.functions import Count
 
 from ballsdex.core.models import (
+    Ball,
     BallInstance,
     BallSeasons,
     DonationPolicy,
@@ -225,8 +226,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         season_txt = season_mapping.get(season.name, season.name) if season else None
         special_txt = special.name if special else None
         ball_txt = countryball.country if countryball else None
-        parts = [part for part in (season_txt, special_txt, ball_txt) if part]
-        combined = "".join(parts)
+
+        combined = " ".join(part for part in (season_txt, special_txt, ball_txt) if part).strip()
 
         if len(countryballs) < 1:
             if user_obj == interaction.user:
@@ -712,6 +713,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         self,
         interaction: discord.Interaction["BallsDexBot"],
         countryball: BallEnabledTransform | None = None,
+        season: BallSeasons | None = None,
         special: SpecialEnabledTransform | None = None,
         current_server: bool = False,
     ):
@@ -722,6 +724,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         ----------
         countryball: Ball
             The countryball you want to count
+        season: BallSeasons | None
+            The season to filter by, shows every season if none.
         special: Special
             The special you want to count
         current_server: bool
@@ -734,6 +738,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         filters = {"deleted": False}
         if countryball:
             filters["ball"] = countryball
+        if season:
+            filters["ball__season"] = season
         if special:
             filters["special"] = special
         if current_server:
@@ -744,12 +750,15 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         balls = await BallInstance.filter(**filters).count()
         country = f"{countryball.country} " if countryball else ""
-        plural = "s" if balls > 1 or balls == 0 else ""
+        plural = (
+            f"{settings.collectible_name}" if balls == 1 else f"{settings.plural_collectible_name}"
+        )
+        season_str = f"from season {season.name}" if season else ""
         special_str = f"{special.name} " if special else ""
         guild = f" caught in {interaction.guild.name}" if current_server else ""
 
         await interaction.followup.send(
-            f"You have {balls} {special_str}{country}{settings.collectible_name}{plural}{guild}."
+            f"You have {balls} {special_str}{country}{plural}{guild}{season_str}."
         )
 
     @app_commands.command()
@@ -816,12 +825,21 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         source = DuplicateViewMenu(interaction, entries, type.value)
         await source.start(content=f"View your duplicate {type.value}.")
 
+    @app_commands.choices(
+        season=[
+            app_commands.Choice(name="F1 2024", value=BallSeasons.F12024),
+            app_commands.Choice(name="Champions", value=BallSeasons.CHAMPS),
+            app_commands.Choice(name="F1 2025", value=BallSeasons.F12025),
+            app_commands.Choice(name="Limited", value=BallSeasons.LIMITED),
+        ]
+    )
     @app_commands.command()
     @app_commands.checks.cooldown(1, 60, key=lambda i: i.user.id)
     async def compare(
         self,
         interaction: discord.Interaction["BallsDexBot"],
         user: discord.User,
+        season: BallSeasons | None = None,
         special: SpecialEnabledTransform | None = None,
     ):
         """
@@ -831,6 +849,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         ----------
         user: discord.User
             The user you want to compare with
+        season: BallSeasons | None
+            The season to filter by, shows every season if none.
         special: Special
             Filter the results of the comparison to a special event.
         """
@@ -855,13 +875,16 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         if await inventory_privacy(self.bot, interaction, player, user) is False:
             return
 
-        bot_countryballs = {x: y.emoji_id for x, y in balls.items() if y.enabled}
-        if special:
-            bot_countryballs = {
-                x: y.emoji_id
-                for x, y in balls.items()
-                if y.enabled and (special.end_date is None or y.created_at < special.end_date)
-            }
+        def is_valid(y: Ball):
+            if not y.enabled:
+                return False
+            if special and special.end_date and y.created_at >= special.end_date:
+                return False
+            if season and y.season != season:
+                return False
+            return True
+
+        bot_countryballs = {x: y.emoji_id for x, y in balls.items() if is_valid(y)}
 
         player1, _ = await Player.get_or_create(discord_id=interaction.user.id)
         player2, _ = await Player.get_or_create(discord_id=user.id)
@@ -883,6 +906,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         queryset = BallInstance.filter(ball__enabled=True, deleted=False).distinct()
         if special:
             queryset = queryset.filter(special=special, deleted=False)
+        if season:
+            queryset = queryset.filter(ball__season=season)
 
         user1_balls = cast(
             list[int],
@@ -936,37 +961,69 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         source = FieldPageSource(entries, per_page=5, inline=False, clear_description=False)
         special_str = f" ({special.name})" if special else ""
+
+        season_mapping = {
+            "F12024": "F1 2024",
+            "CHAMPS": "Champions",
+            "F12025": "F1 2025",
+            "LIMITED": "Limited",
+        }
+
+        season_txt = (
+            f"from season {season_mapping.get(season.name, season.name)}" if season else ""
+        )
         source.embed.title = (
             f"Comparison of {interaction.user.display_name} and {user.display_name}'s "
-            f"{settings.plural_collectible_name}{special_str}"
+            f"{settings.plural_collectible_name}{special_str}{season_txt}"
         )
         source.embed.colour = discord.Colour.blurple()
 
         pages = Pages(source=source, interaction=interaction, compact=True)
         await pages.start()
 
+    @app_commands.choices(
+        season=[
+            app_commands.Choice(name="F1 2024", value=BallSeasons.F12024),
+            app_commands.Choice(name="Champions", value=BallSeasons.CHAMPS),
+            app_commands.Choice(name="F1 2025", value=BallSeasons.F12025),
+            app_commands.Choice(name="Limited", value=BallSeasons.LIMITED),
+        ]
+    )
     @app_commands.command()
     async def collection(
         self,
         interaction: discord.Interaction["BallsDexBot"],
         countryball: BallEnabledTransform | None = None,
+        season: BallSeasons | None = None,
     ):
         """
         Show the collection of a specific countryball.
 
         Parameters
         ----------
-        countryball: Ball
+        countryball: BallEnabledTransform | None
             The countryball you want to see the collection of
+        season: BallSeasons | None
+            The season to filter by, shows every season if none.
         """
         await interaction.response.defer(thinking=True)
         player, _ = await Player.get_or_create(discord_id=interaction.user.id)
+
+        if countryball and season:
+            await interaction.followup.send(
+                f"You cannot filter by both a {settings.collectible_name} "
+                "and a season at the same time.",
+                ephemeral=True,
+            )
+            return
 
         query = BallInstance.filter(player=player, deleted=False).prefetch_related(
             "player", "trade_player", "special"
         )
         if countryball:
             query = query.filter(ball=countryball, deleted=False)
+        if season:
+            query = query.filter(ball__season=season)
 
         balls = await query
 
@@ -975,6 +1032,11 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 await interaction.followup.send(
                     f"You don't have any {countryball.country} "
                     f"{settings.plural_collectible_name} yet."
+                )
+            elif season:
+                await interaction.followup.send(
+                    f"You don't have any {settings.plural_collectible_name} "
+                    f"from the {season.name} season yet."
                 )
             else:
                 await interaction.followup.send(
@@ -1005,8 +1067,15 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             emoji = special_emojis.get(special.name, "")
             desc += f"{emoji} {special.name}: {count:,}\n"
 
+        title = (
+            f"Collection of {countryball.country}"
+            if countryball
+            else f"Collection of {season.name}"
+            if season
+            else "Total Collection"
+        )
         embed = discord.Embed(
-            title=f"Collection of {countryball.country}" if countryball else "Total Collection",
+            title=title,
             description=desc,
             color=discord.Color.blurple(),
         )
@@ -1021,12 +1090,21 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         await interaction.followup.send(embed=embed)
 
+    @app_commands.choices(
+        season=[
+            app_commands.Choice(name="F1 2024", value=BallSeasons.F12024),
+            app_commands.Choice(name="Champions", value=BallSeasons.CHAMPS),
+            app_commands.Choice(name="F1 2025", value=BallSeasons.F12025),
+            app_commands.Choice(name="Limited", value=BallSeasons.LIMITED),
+        ]
+    )
     @app_commands.command()
     @app_commands.checks.cooldown(1, 10, key=lambda i: i.user.id)
     async def rarity(
         self,
         interaction: discord.Interaction["BallsDexBot"],
         countryball: BallEnabledTransform | None = None,
+        season: BallSeasons | None = None,
     ):
         """
         Show a rarity list of the bot, or a specific countryball's rarity.
@@ -1035,6 +1113,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         ----------
         countryball: BallEnabledTransform
             Whether to show a specific countryball or not.
+        season: BallSeasons | None
+            The season to filter by, shows current season if none.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
         enabled_collectibles = [x for x in balls.values() if x.enabled]
@@ -1063,8 +1143,33 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                         ephemeral=True,
                     )
                     return
+        elif season:
+            rarity_to_collectibles = {}
+            season_collectibles = [x for x in balls.values() if x.enabled and x.season == season]
+
+            for collectible in season_collectibles:
+                rarity = collectible.rarity
+                if rarity not in rarity_to_collectibles:
+                    rarity_to_collectibles[rarity] = []
+                rarity_to_collectibles[rarity].append(collectible)
+
+            sorted_collectibles = sorted(enabled_collectibles, key=lambda c: (c.rarity, c.country))
+
+            entries: list[tuple[str, str]] = []
+
+            current_rank = 1
+            last_rarity = None
+            for idx, collectible in enumerate(sorted_collectibles, start=1):
+                if collectible.rarity != last_rarity:
+                    current_rank = idx
+                    last_rarity = collectible.rarity
+
+                emoji = self.bot.get_emoji(collectible.emoji_id) or "N/A"
+                line = f"{current_rank}. {emoji} {collectible.country}"
+                entries.append(("", line))
         else:
             rarity_to_collectibles = {}
+
             for collectible in enabled_collectibles:
                 rarity = collectible.rarity
                 if rarity not in rarity_to_collectibles:

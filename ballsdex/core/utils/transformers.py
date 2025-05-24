@@ -254,8 +254,7 @@ class TTLModelTransformer(ModelTransformer[T]):
             self.items = {x.pk: x for x in await self.load_items()}
             self.last_refresh = t
             self.search_map = {
-                x: (await self.key(x, interaction)).lower()
-                for x in self.items.values()
+                x: (await self.key(x, interaction)).lower() for x in self.items.values()
             }
 
     async def get_options(
