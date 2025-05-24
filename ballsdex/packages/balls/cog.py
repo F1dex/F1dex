@@ -226,11 +226,9 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         season_txt = (
             f"from season {season_mapping.get(season.name, season.name)}" if season else ""
         )
-        special_txt = special.name if special else ""
-        ball_txt = countryball.country if countryball else ""
-
-        parts = [txt.strip() for txt in (special_txt, ball_txt, season_txt) if txt.strip()]
-        combined = " ".join(parts)
+        special_txt = f"{special.name} " if special else ""
+        ball_txt = f"{countryball.country} " if countryball else ""
+        combined = f"{special_txt}{ball_txt}{season_txt}"
 
         if len(countryballs) < 1:
             msg = (
@@ -763,12 +761,22 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         plural = (
             f"{settings.collectible_name}" if balls == 1 else f"{settings.plural_collectible_name}"
         )
-        season_str = f" from season {season.name}" if season else ""
+
+        season_mapping = {
+            "F12024": "F1 2024",
+            "CHAMPS": "Champions",
+            "F12025": "F1 2025",
+            "LIMITED": "Limited",
+        }
+
+        season_str = (
+            f" from season {season_mapping.get(season.name, season.name)}" if season else ""
+        )
         special_str = f"{special.name} " if special else ""
         guild = f" caught in {interaction.guild.name}" if current_server else ""
 
         await interaction.followup.send(
-            f"You have {balls} {special_str}{country}{plural}{guild}{season_str}."
+            f"You have {balls} {special_str}{country}{plural}{season_str}{guild}."
         )
 
     @app_commands.command()
