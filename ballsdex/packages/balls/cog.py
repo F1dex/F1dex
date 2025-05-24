@@ -226,35 +226,37 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         season_txt = (
             f"from season {season_mapping.get(season.name, season.name)}" if season else ""
         )
-        special_txt = f"{special.name} " if special else ""
-        ball_txt = f"{countryball.country} " if countryball else ""
-        combined = (
-            f"{special_txt}{ball_txt}{season_txt}" if special or countryball or season else ""
-        )
+        special_txt = special.name if special else ""
+        ball_txt = countryball.country if countryball else ""
+
+        combined_parts = [special_txt, ball_txt, season_txt]
+        combined = " ".join(part for part in combined_parts if part)
+
+        combined_str = f" {combined}" if combined else ""
 
         if len(countryballs) < 1:
             msg = (
-                f"You don't have any {combined} {settings.plural_collectible_name} yet."
+                f"You don't have any{combined_str} {settings.plural_collectible_name} yet."
                 if user_obj == interaction.user
                 else (
-                    f"{user_obj.name} doesn't have any {combined} "
+                    f"{user_obj.name} doesn't have any{combined_str} "
                     f"{settings.plural_collectible_name} yet."
                 )
             )
-            await interaction.followup.send(msg.strip())
+            await interaction.followup.send(msg)
             return
 
         if reverse:
             countryballs.reverse()
 
         content = (
-            f"Viewing your {combined} {settings.plural_collectible_name}"
+            f"Viewing your{combined_str} {settings.plural_collectible_name}"
             if user_obj == interaction.user
-            else f"Viewing {user_obj.name}'s {combined} {settings.plural_collectible_name}"
+            else f"Viewing {user_obj.name}'s{combined_str} {settings.plural_collectible_name}"
         )
 
         paginator = CountryballsViewer(interaction, countryballs)
-        await paginator.start(content=content.strip())
+        await paginator.start(content=content)
 
     @app_commands.choices(
         season=[
