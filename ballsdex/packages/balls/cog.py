@@ -897,16 +897,26 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         if await inventory_privacy(self.bot, interaction, player, user) is False:
             return
 
-        def is_valid(y: Ball):
-            if not y.enabled:
-                return False
-            if special and special.end_date and y.created_at >= special.end_date:
-                return False
-            if season and y.season != season:
-                return False
-            return True
-
-        bot_countryballs = {x: y.emoji_id for x, y in balls.items() if is_valid(y)}
+        if season and special:
+            bot_countryballs = {
+                x: y.emoji_id
+                for x, y in balls.items()
+                if y.enabled
+                and (special.end_date is None or y.created_at < special.end_date)
+                and y.season == season
+            }
+        elif season:
+            bot_countryballs = {
+                x: y.emoji_id for x, y in balls.items() if y.enabled and y.season == season
+            }
+        elif special:
+            bot_countryballs = {
+                x: y.emoji_id
+                for x, y in balls.items()
+                if y.enabled and (special.end_date is None or y.created_at < special.end_date)
+            }
+        else:
+            bot_countryballs = {x: y.emoji_id for x, y in balls.items() if y.enabled}
 
         player1, _ = await Player.get_or_create(discord_id=interaction.user.id)
         player2, _ = await Player.get_or_create(discord_id=user.id)
