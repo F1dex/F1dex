@@ -228,7 +228,9 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         )
         special_txt = f"{special.name} " if special else ""
         ball_txt = f"{countryball.country} " if countryball else ""
-        combined = f"{special_txt}{ball_txt}{season_txt}"
+        combined = (
+            f"{special_txt}{ball_txt}{season_txt}" if special or countryball or season else ""
+        )
 
         if len(countryballs) < 1:
             msg = (
@@ -988,7 +990,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         }
 
         season_txt = (
-            f"from season {season_mapping.get(season.name, season.name)}" if season else ""
+            f" from season {season_mapping.get(season.name, season.name)}" if season else ""
         )
         source.embed.title = (
             f"Comparison of {interaction.user.display_name} and {user.display_name}'s "
@@ -1085,10 +1087,18 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             emoji = special_emojis.get(special.name, "")
             desc += f"{emoji} {special.name}: {count:,}\n"
 
+        season_mapping = {
+            "F12024": "F1 2024",
+            "CHAMPS": "Champions",
+            "F12025": "F1 2025",
+            "LIMITED": "Limited",
+        }
+
+        season_txt = f"{season_mapping.get(season.name, season.name)}" if season else ""
         title = (
             f"Collection of {countryball.country}"
             if countryball
-            else f"Collection of {season.name}"
+            else f"Collection of {season_txt}"
             if season
             else "Total Collection"
         )
@@ -1208,3 +1218,21 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
                 emoji = self.bot.get_emoji(collectible.emoji_id) or "N/A"
                 line = f"{current_rank}. {emoji} {collectible.country}"
                 entries.append(("", line))
+
+        season_mapping = {
+            "F12024": "F1 2024",
+            "CHAMPS": "Champions",
+            "F12025": "F1 2025",
+            "LIMITED": "Limited",
+        }
+
+        season_txt = f"{season_mapping.get(season.name, season.name)}"
+        source = FieldPageSource(entries, per_page=10, inline=False, clear_description=False)
+        source.embed.title = (
+            f"{settings.bot_name} {season_txt} Rarity List"
+            if season
+            else f"{settings.bot_name} Rarity List"
+        )
+        source.embed.color = discord.Color.green()
+        pages = Pages(source=source, interaction=interaction, compact=False)
+        await pages.start()
