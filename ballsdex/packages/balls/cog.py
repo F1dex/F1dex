@@ -1,7 +1,7 @@
 import enum
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import discord
 from discord import app_commands
@@ -11,7 +11,6 @@ from tortoise.exceptions import DoesNotExist
 from tortoise.functions import Count
 
 from ballsdex.core.models import (
-    Ball,
     BallInstance,
     BallSeasons,
     DonationPolicy,
@@ -274,6 +273,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         user: discord.User | None = None,
         special: SpecialEnabledTransform | None = None,
         season: BallSeasons | None = None,
+        all: bool = False,
     ):
         """
         Show your current completion of the BallsDex.
@@ -286,6 +286,8 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             The special you want to see the completion of
         season: BallSeasons | None
             The season to filter by, shows every season if none.
+        all: bool | None
+            Show all countryballs in the bot, ignored if none.
         """
         user_obj = user or interaction.user
         await interaction.response.defer(thinking=True)
@@ -317,21 +319,24 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         bot_countryballs = {
             x: y.emoji_id
             for x, y in balls.items()
-            if (season is not None or y.enabled)
-            and (season is None or y.season == season.value)
-            and (not special or special.end_date is None or y.created_at < special.end_date)
+            if (
+                (all or season is not None or y.enabled)
+                and (all or season is None or y.season == season.value)
+                and (all is False or y.season is not None)
+                and (not special or special.end_date is None or y.created_at < special.end_date)
+            )
         }
 
         filters = {"player__discord_id": user_obj.id, "deleted": False}
 
-        if season is None:
+        if not all and season is None:
             filters["ball__enabled"] = True
+
+        if season is not None and not all:
+            filters["ball__season"] = season
 
         if special:
             filters["special"] = special
-
-        if season is not None:
-            filters["ball__season"] = season
 
         if not bot_countryballs:
             await interaction.followup.send(
@@ -863,6 +868,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         user: discord.User,
         season: BallSeasons | None = None,
         special: SpecialEnabledTransform | None = None,
+        all: bool = False,
     ):
         """
         Compare your countryballs with another user.
@@ -873,8 +879,10 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             The user you want to compare with
         season: BallSeasons | None
             The season to filter by, shows every season if none.
-        special: Special
+        special: SpecialEnabledTransform | None
             Filter the results of the comparison to a special event.
+        all: bool | None
+            Show all countryballs in the bot, ignored if none.
         """
         await interaction.response.defer(thinking=True)
 
@@ -897,25 +905,16 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         if await inventory_privacy(self.bot, interaction, player, user) is False:
             return
 
-        if season and special:
-            bot_countryballs = {
-                x: y.emoji_id
-                for x, y in balls.items()
-                and (special.end_date is None or y.created_at < special.end_date)
-                and y.season == season
-            }
-        elif season:
-            bot_countryballs = {
-                x: y.emoji_id for x, y in balls.items() if y.season == season
-            }
-        elif special:
-            bot_countryballs = {
-                x: y.emoji_id
-                for x, y in balls.items()
-                if y.enabled and (special.end_date is None or y.created_at < special.end_date)
-            }
-        else:
-            bot_countryballs = {x: y.emoji_id for x, y in balls.items() if y.enabled}
+        bot_countryballs = {
+            x: y.emoji_id
+            for x, y in balls.items()
+            if (
+                (all or season is not None or y.enabled)
+                and (all or season is None or y.season == season.value)
+                and (not all or y.season is not None)
+                and (not special or special.end_date is None or y.created_at < special.end_date)
+            )
+        }
 
         player1, _ = await Player.get_or_create(discord_id=interaction.user.id)
         player2, _ = await Player.get_or_create(discord_id=user.id)
@@ -934,78 +933,80 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             )
             return
 
-        queryset = BallInstance.filter(ball__enabled=True, deleted=False).distinct()
-        if special:
-            queryset = queryset.filter(special=special, deleted=False)
-        if season:
-            queryset = queryset.filter(ball__season=season)
+        filters = {"deleted": False}
 
-        user1_balls = cast(
-            list[int],
-            await queryset.filter(player=player1).values_list("ball_id", flat=True),
+        if special:
+            filters["special"] = special
+
+        if not all and season is None:
+            filters["ball__enabled"] = True
+        if season and not all:
+            filters["ball__season"] = season
+
+        valid_ball_ids = set(bot_countryballs.keys())
+
+        user1_balls = (
+            await BallInstance.filter(**filters, player=player1, ball_id__in=valid_ball_ids)
+            .distinct()
+            .values_list("ball_id", flat=True)
         )
-        user2_balls = cast(
-            list[int],
-            await queryset.filter(player=player2).values_list("ball_id", flat=True),
+        user2_balls = (
+            await BallInstance.filter(**filters, player=player2, ball_id__in=valid_ball_ids)
+            .distinct()
+            .values_list("ball_id", flat=True)
         )
-        both = set(user1_balls) & set(user2_balls)
-        user1_only = set(user1_balls) - set(user2_balls)
-        user2_only = set(user2_balls) - set(user1_balls)
-        neither = set(bot_countryballs.keys()) - both - user1_only - user2_only
+
+        user1_balls = set(user1_balls)
+        user2_balls = set(user2_balls)
+
+        both = user1_balls & user2_balls
+        user1_only = user1_balls - user2_balls
+        user2_only = user2_balls - user1_balls
+        neither = valid_ball_ids - both - user1_only - user2_only
 
         entries = []
 
         def fill_fields(title: str, ids: set[int]):
+            if not ids:
+                entries.append((f"__**{title}**__", "None"))
+                return
+
             first_field_added = False
             buffer = ""
-
             for ball_id in ids:
                 emoji = self.bot.get_emoji(bot_countryballs[ball_id])
                 if not emoji:
                     continue
-
                 text = f"{emoji} "
                 if len(buffer) + len(text) > 1024:
-                    # hitting embed limits, adding an intermediate field
-                    if first_field_added:
-                        entries.append(("\u200b", buffer))
-                    else:
-                        entries.append((f"__**{title}**__", buffer))
-                        first_field_added = True
+                    entries.append(
+                        (f"__**{title}**__" if not first_field_added else "\u200b", buffer)
+                    )
+                    first_field_added = True
                     buffer = ""
                 buffer += text
 
-            if buffer:  # add what's remaining
-                if first_field_added:
-                    entries.append(("\u200b", buffer))
-                else:
-                    entries.append((f"__**{title}**__", buffer))
+            if buffer:
+                entries.append((f"__**{title}**__" if not first_field_added else "\u200b", buffer))
 
-        if both:
-            fill_fields("Both have", both)
-        else:
-            entries.append(("__**Both have**__", "None"))
-
+        fill_fields("Both have", both)
         fill_fields(f"{interaction.user.display_name} has", user1_only)
         fill_fields(f"{user.display_name} has", user2_only)
         fill_fields("Neither have", neither)
 
         source = FieldPageSource(entries, per_page=5, inline=False, clear_description=False)
-        special_str = f" ({special.name})" if special else ""
-
-        season_mapping = {
-            "F12024": "F1 2024",
-            "CHAMPS": "Champions",
-            "F12025": "F1 2025",
-            "LIMITED": "Limited",
-        }
-
         season_txt = (
-            f" from season {season_mapping.get(season.name, season.name)}" if season else ""
+            f" from season {
+                season.name.replace('F12024', 'F1 2024').replace('F12025', 'F1 2025').title()
+            }"
+            if season and not all
+            else ""
         )
+        special_txt = f" ({special.name})" if special else ""
+
         source.embed.title = (
             f"Comparison of {interaction.user.display_name} and {user.display_name}'s "
-            f"{settings.plural_collectible_name}{special_str}{season_txt}"
+            f"{settings.plural_collectible_name}{special_txt}{season_txt}"
         )
         source.embed.colour = discord.Colour.blurple()
 
