@@ -170,6 +170,7 @@ async def open_pack(
 class PackSorting(enum.Enum):
     price = "price"
     alphabetical = "alphabetical"
+    created_at = "created_at"
 
 
 class PackConfirmChoiceView(View):
@@ -356,9 +357,11 @@ class Packs(commands.GroupCog):
         query = PackModel.filter(purchasable=True)
         if sorting:
             if sorting == PackSorting.price:
-                query = query.order_by(PackModel.price)
+                query = query.order_by("price")
             elif sorting == PackSorting.alphabetical:
-                query = query.order_by(PackModel.name)
+                query = query.order_by("name")
+            elif sorting == PackSorting.created_at:
+                query = query.order_by("created_at")
 
         results = await query
         if reverse:
@@ -475,6 +478,8 @@ class Packs(commands.GroupCog):
                 query = query.order_by("pack__price")
             elif sorting == PackSorting.alphabetical:
                 query = query.order_by("pack__name")
+            elif sorting == PackSorting.created_at:
+                query = query.order_by("pack__created_at")
 
         results = await query
         if reverse:
