@@ -461,6 +461,6 @@ class BallSpawnView(View):
             amount += special_bonus_from_rarity(ball.special.rarity)
 
         return caught_message + (
-            f"`(#{ball.pk:0X}, {ball.attack_bonus:+}%/{ball.health_bonus:+}%)`"
+            f"`(#{ball.pk:0X}, {ball.attack_bonus:+}%/{ball.health_bonus:+}%)` "
             f"**(+{amount} {settings.currency_emoji})**\n\n{text}"
         )
