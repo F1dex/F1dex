@@ -223,36 +223,38 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
             "LIMITED": "Limited",
         }
 
-        season_txt = season_mapping.get(season.name, season.name) if season else None
-        special_txt = special.name if special else None
-        ball_txt = countryball.country if countryball else None
+        season_txt = (
+            f"from season {season_mapping.get(season.name, season.name)}" if season else ""
+        )
+        special_txt = special.name if special else ""
+        ball_txt = countryball.country if countryball else ""
 
-        combined = " ".join(part for part in (season_txt, special_txt, ball_txt) if part).strip()
+        parts = [txt.strip() for txt in (special_txt, ball_txt, season_txt) if txt.strip()]
+        combined = " ".join(parts)
 
         if len(countryballs) < 1:
-            if user_obj == interaction.user:
-                await interaction.followup.send(
-                    f"You don't have any {combined} {settings.plural_collectible_name} yet."
-                )
-            else:
-                await interaction.followup.send(
+            msg = (
+                f"You don't have any {combined} {settings.plural_collectible_name} yet."
+                if user_obj == interaction.user
+                else (
                     f"{user_obj.name} doesn't have any {combined} "
                     f"{settings.plural_collectible_name} yet."
                 )
+            )
+            await interaction.followup.send(msg.strip())
             return
 
         if reverse:
             countryballs.reverse()
 
+        content = (
+            f"Viewing your {combined} {settings.plural_collectible_name}"
+            if user_obj == interaction.user
+            else f"Viewing {user_obj.name}'s {combined} {settings.plural_collectible_name}"
+        )
+
         paginator = CountryballsViewer(interaction, countryballs)
-        if user_obj == interaction.user:
-            await paginator.start(
-                content=f"Viewing your {combined} {settings.plural_collectible_name}"
-            )
-        else:
-            await paginator.start(
-                content=f"Viewing {user_obj.name}'s {combined} {settings.plural_collectible_name}"
-            )
+        await paginator.start(content=content.strip())
 
     @app_commands.choices(
         season=[
@@ -708,6 +710,14 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
 
         await countryball.unlock()
 
+    @app_commands.choices(
+        season=[
+            app_commands.Choice(name="F1 2024", value=BallSeasons.F12024),
+            app_commands.Choice(name="Champions", value=BallSeasons.CHAMPS),
+            app_commands.Choice(name="F1 2025", value=BallSeasons.F12025),
+            app_commands.Choice(name="Limited", value=BallSeasons.LIMITED),
+        ]
+    )
     @app_commands.command()
     async def count(
         self,
