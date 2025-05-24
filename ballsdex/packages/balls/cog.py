@@ -763,7 +763,7 @@ class Balls(commands.GroupCog, group_name=settings.players_group_cog_name):
         plural = (
             f"{settings.collectible_name}" if balls == 1 else f"{settings.plural_collectible_name}"
         )
-        season_str = f"from season {season.name}" if season else ""
+        season_str = f" from season {season.name}" if season else ""
         special_str = f"{special.name} " if special else ""
         guild = f" caught in {interaction.guild.name}" if current_server else ""
 
